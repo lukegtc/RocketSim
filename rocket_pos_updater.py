@@ -59,9 +59,10 @@ while running:
     #                        [-sin(theta),cos(psi),0]])
     #calculates pressure, temperature and density using the atmossolver equation from the atmosphere file
     press,temp,density=atmossolver(earth.g0,earth.layers,earth.avals,radius-earth.radius,earth.r,earth.base_temp,earth.base_press)
-    #To introduce gimballing
-#    print(press,temp,density,engine1.pos[2])
+
+
     engine1.isp = ve/earth.g0
+    #engine1 gimballing
     if engine1.gimbal[0] >=-np.pi/2:
 
         engine1.gimbal-= np.array([pi/2/1800,0,0])
@@ -77,24 +78,25 @@ while running:
     pitch_mat = Matrices.pitch_matrix(engine1.gimbal[1]) #around the y axis
     yaw_mat = Matrices.yaw_matrix(engine1.gimbal[2]) #around the z axis
 
+    #fuel mass change
     if fuel.mass <=0:
         thrust = np.array([0,0,0])
 
-     #   print('done')
     else:
         thrust = engine1.mdot * ve
         fuel.mass-=dt*engine1.mdot
+
+    #Drag force change
     if engine1.pos[2]<0:
         drag_force = np.array([0,0,0])
-       # engine1.pos = np.array([0,0,0])
+
     else:
         if np.linalg.norm(rocket_vel) != 0.:
             drag_force = -0.5*density*(np.linalg.norm(rocket_vel)**2)*rocket1.area*rocket1.cD*(rocket_vel/np.linalg.norm(rocket_vel))
         else:
             drag_force = np.array([0,0,0])
 
-   # if np.linalg.norm(drag_force) == 0:
-    #    print(engine1.pos)
+    #summation of all forces acting on the rocket
     total_force = (rocket1.mass_empty+fuel.mass)*(engine1.pos/radius)*-9.80665+drag_force+np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,thrust)))
 
     rocket_accel = total_force/(rocket1.mass_empty+fuel.mass)
