@@ -73,15 +73,9 @@ while running:
 
     else:
         engine1.gimbal[2] = -pi/2
-    roll_mat = np.array([[1,0,0],
-                         [0,cos(engine1.gimbal[0]),-sin(engine1.gimbal[0])],
-                         [0,sin(engine1.gimbal[0]),cos(engine1.gimbal[0])]]) #around the x axis
-    pitch_mat= np.array([[cos(engine1.gimbal[1]),0,sin(engine1.gimbal[1])],
-                         [0,1,0],
-                         [-sin(engine1.gimbal[1]),0,cos(engine1.gimbal[1])]]) #around the y axis
-    yaw_mat = np.array([[cos(engine1.gimbal[2]),-sin(engine1.gimbal[2]),0],
-                        [sin(engine1.gimbal[2]),cos(engine1.gimbal[2]),0],
-                        [0,0,1]]) #around the z axis
+    roll_mat = Matrices.roll_matrix(engine1.gimbal[0]) #around x axis
+    pitch_mat = Matrices.pitch_matrix(engine1.gimbal[1]) #around the y axis
+    yaw_mat = Matrices.yaw_matrix(engine1.gimbal[2]) #around the z axis
 
     if fuel.mass <=0:
         thrust = np.array([0,0,0])

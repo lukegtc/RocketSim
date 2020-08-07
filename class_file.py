@@ -57,3 +57,18 @@ class Rocket:
             self.mdot = mdot
             self.pos = pos
             self.gimbal = gimbal
+class Matrices:
+
+    def roll_matrix(self,gamma):
+        return np.array([[1,0,0],
+                         [0,cos(gamma),-sin(gamma)],
+                         [0,sin(gamma),cos(gamma)]])
+    def pitch_matrix(self,beta):
+        return np.array([[cos(beta),0,sin(beta)],
+                         [0,1,0],
+                         [-sin(beta),0,cos(beta)]])
+
+    def yaw_matrix(self,alpha):
+        return np.array([[cos(alpha),-sin(alpha),0],
+                        [sin(alpha),cos(alpha),0],
+                        [0,0,1]])
