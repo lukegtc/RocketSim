@@ -9,9 +9,10 @@ from mpl_toolkits.mplot3d import Axes3D
 #rocket created
 rocket1 = Rocket()
 #engine Created
-engine1 = rocket1.Engine(mdot=9283)
+engine1 = rocket1.Engine(mdot=845)
+engine2 = rocket1.Engine(mdot=845)
 #rocket thrust force
-rocket1.thrust = np.array([0,0,2000e3])
+rocket1.thrust = np.array([0,0,7605e3])
 #exit velocity
 ve = np.array([0,0,1000])
 dt = 0.1
@@ -74,17 +75,20 @@ while running:
 
     else:
         engine1.gimbal[2] = -pi/2
-    roll_mat = Matrices.roll_matrix(engine1.gimbal[0]) #around x axis
-    pitch_mat = Matrices.pitch_matrix(engine1.gimbal[1]) #around the y axis
-    yaw_mat = Matrices.yaw_matrix(engine1.gimbal[2]) #around the z axis
+    matrices = Matrices()
+    roll_mat = matrices.roll_matrix(engine1.gimbal[0]) #around x axis
+    pitch_mat = matrices.pitch_matrix(engine1.gimbal[1]) #around the y axis
+    yaw_mat = matrices.yaw_matrix(engine1.gimbal[2]) #around the z axis
 
     #fuel mass change
     if fuel.mass <=0:
-        thrust = np.array([0,0,0])
+        engine1.mdot = 0
+        engine2.mdot = 0
 
-    else:
-        thrust = engine1.mdot * ve
-        fuel.mass-=dt*engine1.mdot
+
+    thrust1 = engine1.mdot * ve
+    thrust2 = engine2.mdot*ve
+    fuel.mass=fuel.mass - dt*engine1.mdot-dt*engine2.mdot
 
     #Drag force change
     if engine1.pos[2]<0:
@@ -97,7 +101,7 @@ while running:
             drag_force = np.array([0,0,0])
 
     #summation of all forces acting on the rocket
-    total_force = (rocket1.mass_empty+fuel.mass)*(engine1.pos/radius)*-9.80665+drag_force+np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,thrust)))
+    total_force = (rocket1.mass_empty+fuel.mass)*(engine1.pos/radius)*-9.80665+drag_force+np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,9*thrust1)))#+thrust2*8
 
     rocket_accel = total_force/(rocket1.mass_empty+fuel.mass)
     rocket_vel +=rocket_accel*dt
