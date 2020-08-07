@@ -27,7 +27,7 @@ r = 287.
 g0=9.80665
 GM = 3.986004418e14
 earth = Planet(6371e3,g0,layers,avals,base_temp,base_press,r,GM)
-engine1.pos = np.array([0.,0.,0.1 + earth.radius])
+engine1.pos = np.array([0.,0.,0. + earth.radius])
 #fuel created
 fuel = rocket1.Fuel(410900)
 
@@ -153,6 +153,13 @@ circle1 = plt.Circle((0,0),6371e3,color='b')
 ax.add_artist(circle1)
 plt.plot(ypos,zpos,color = 'r')
 plt.show()
+
+fig1, ax1 = plt.subplots()
+circle2 = plt.Circle((0,0),6371e3, color='b')
+
+ax1.add_artist(circle2)
+plt.plot(xpos,zpos,color = 'r')
+plt.show()
 # plt.title('Drag Force')
 # plt.plot(time,dragforce)
 # plt.show()
@@ -163,8 +170,7 @@ plt.show()
 # plt.plot(time,temps)
 # plt.show()
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+
 
 
 #

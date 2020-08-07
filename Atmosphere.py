@@ -28,8 +28,9 @@ def atmossolver(g0,layers,avals,alt_given,r,base_temp,base_press):
     while True:
 
 
-        if alt_given<0:
+        if alt_given<=0:
             return base_press,base_temp,base_press/r/base_temp
+
         elif layers[i]<alt_given/1000 <=layers[i+1]:
 
             from_alt = AtmosLayer(alt_given/1000,avals[i],layers[i],base_temp1[-1],base_press1[-1],g0,r)
