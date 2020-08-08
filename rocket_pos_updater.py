@@ -140,7 +140,7 @@ while running:
     ypos.append(engine1.pos[1])
     xpos.append((engine1.pos[0]))
     ttlforce.append((np.linalg.norm(total_force)))
-    skin_temps.append(skin_temp)
+    skin_temps.append(tot_skin_temp)
     dragforce.append(np.linalg.norm(drag_force))
     time1.append(t)
     time.append(t)
