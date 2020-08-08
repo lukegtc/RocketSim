@@ -29,7 +29,7 @@ class Planet:
 
 
 class Rocket:
-    def __init__(self,cD = 0.3,diameter = 3.7,thrust = np.array([0,0,0]),cgpos = np.array([0,0,0]),mass = 0,stblzrforce = np.array([0,0,0]),surface_area = 0,height = 0):
+    def __init__(self,cD = 0.3,diameter = 3.7,thrust = np.array([0,0,0]),cgpos = np.array([0,0,0]),mass = 0,stblzrforce = np.array([0,0,0]),surface_area = 0,height = 0,specific_heat = 1000):
         self.thrust = thrust
         self.cgpos = cgpos
         self.mass_empty = mass
@@ -39,6 +39,7 @@ class Rocket:
         self.cD = cD
         self.diameter = diameter
         self.area = pi*(self.diameter/2)**2
+        self.specific_heat = specific_heat #just looked up some similar vals of material similar to the falcon 9 skin
 
     class GridFin:
         def __init__(self, angle, size):

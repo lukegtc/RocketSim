@@ -44,6 +44,7 @@ ttlforce = []
 dragforce = []
 densitys = []
 temps = []
+skin_temps = []
 presss = []
 rocket_vel = np.array([0.,0.,0.])
 off_pad = False
@@ -51,6 +52,7 @@ off_pad = False
 orbital_alt = 500e3
 orbit_vel = sqrt(earth.GM/(earth.r+orbital_alt))
 radius = earth.radius+0.1
+skin_temp = 0
 while running:
     radius = sqrt(engine1.pos[0]**2 + engine1.pos[1]**2 + (engine1.pos[2])**2)
     # theta = np.arctan(sqrt(engine1.pos[0]**2 + engine1.pos[1]**2)/(engine1.pos[2]+earth.radius))
@@ -99,18 +101,32 @@ while running:
             drag_force = -0.5*density*(np.linalg.norm(rocket_vel)**2)*rocket1.area*rocket1.cD*rocket_vel/(np.linalg.norm(rocket_vel))
         else:
             drag_force = np.array([0,0,0])
-    print(drag_force,radius)
+  #  print(drag_force,radius)
     #summation of all forces acting on the rocket
     total_force = (rocket1.mass_empty+fuel.mass)*(engine1.pos/radius)*-9.80665+np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,9*thrust1)))+drag_force#+thrust2*8
-
+   # if radius <earth.radius+86000:
+      #  print(drag_force,total_force,radius)
     rocket_accel = total_force/(rocket1.mass_empty+fuel.mass)
     rocket_vel +=rocket_accel*dt
     engine1.pos +=rocket_vel*dt
 
     temps.append(temp)
     t+=dt
+    #change in temp due to atmosphere
+    if radius<= 6371e3 + earth.layers[-1]*10**3:
 
-    if t > 15000 or radius<earth.radius:
+        fric_temp = dt*dt*1.83*10**(-4)*(rocket1.mass_empty+fuel.mass)*np.linalg.norm(rocket_vel)**3*sqrt(density/rocket1.diameter/2)/rocket1.specific_heat
+        skin_temp+=fric_temp
+    else:
+        skin_temp = 0
+    tot_skin_temp = temp + skin_temp
+    print(tot_skin_temp)
+    skin_temps.append(tot_skin_temp)
+    if tot_skin_temp >= 1923.15:  #This reentry temp is totally made up based on space shuttle values
+        running = False
+        print('Burnt up on reentry or ascent')
+
+    if t > 50000 or radius<earth.radius:
         running = False
         break
     zpos.append(engine1.pos[2])
@@ -165,6 +181,9 @@ plt.plot(time,rads)
 plt.show()
 plt.title('Drag Force')
 plt.plot(time,dragforce,color = 'r')
+plt.show()
+plt.title('Skin Temp')
+plt.plot(time,temps)
 plt.show()
 # plt.title('Density')
 # plt.plot(time,densitys)
