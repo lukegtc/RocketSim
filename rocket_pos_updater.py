@@ -17,7 +17,7 @@ rocket1.thrust = np.array([0,0,7605e3])
 ve = np.array([0,0,700])
 dt = 0.1
 t = 0
-rocket1.mass = 22200
+
 #atmosphere values
 layers = [0.,11.,20.,32.,47.,51.,71.,86.]
 avals = [-6.5,0,1,2.8,0,-2.8,-2.]
@@ -51,9 +51,10 @@ off_pad = False
 #values for circular orbit
 orbital_alt = 500e3
 orbit_vel = sqrt(earth.GM/(earth.r+orbital_alt))
-radius = earth.radius+0.1
+radius = earth.radius
 skin_temp = 0
 while running:
+    rocket1.mass_empty = 22200.
     radius = sqrt(engine1.pos[0]**2 + engine1.pos[1]**2 + (engine1.pos[2])**2)
     # theta = np.arctan(sqrt(engine1.pos[0]**2 + engine1.pos[1]**2)/(engine1.pos[2]+earth.radius))
     # psi = np.arctan(engine1.pos[1]/engine1.pos[0])
@@ -86,16 +87,16 @@ while running:
     if fuel.mass <=0:
         engine1.mdot = 0
         engine2.mdot = 0
-
+        fuel.mass = 0
 
     thrust1 = engine1.mdot * ve
     thrust2 = engine2.mdot*ve
-    fuel.mass=fuel.mass - dt*engine1.mdot-dt*engine2.mdot
+    fuel.mass=fuel.mass - dt*engine1.mdot-dt*engine2.mdot*8
 
     #Drag force change
     if radius<earth.radius:
-        drag_force = np.array([0,0,0])
-        rocket_vel = np.array([0,0,0])
+        drag_force = np.array([0.,0.,0.])
+        rocket_vel = np.array([0.,0.,0.])
     else:
         if np.linalg.norm(rocket_vel) != 0.:
             drag_force = -0.5*density*(np.linalg.norm(rocket_vel)**2)*rocket1.area*rocket1.cD*rocket_vel/(np.linalg.norm(rocket_vel))
@@ -106,34 +107,40 @@ while running:
     total_force = (rocket1.mass_empty+fuel.mass)*(engine1.pos/radius)*-9.80665+np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,9*thrust1)))+drag_force#+thrust2*8
    # if radius <earth.radius+86000:
       #  print(drag_force,total_force,radius)
+
     rocket_accel = total_force/(rocket1.mass_empty+fuel.mass)
+    print(rocket_accel,rocket_vel)
     rocket_vel +=rocket_accel*dt
     engine1.pos +=rocket_vel*dt
-
     temps.append(temp)
+
     t+=dt
     #change in temp due to atmosphere
+    nose_radius = 0.7 #don't know if this is true but eh close enough for F9
     if radius<= 6371e3 + earth.layers[-1]*10**3:
 
-        fric_temp = dt*dt*1.83*10**(-4)*(rocket1.mass_empty+fuel.mass)*np.linalg.norm(rocket_vel)**3*sqrt(density/rocket1.diameter/2)/rocket1.specific_heat
+        fric_temp = dt*dt*1.83*10**(-4)*25*np.linalg.norm(rocket_vel)**3*sqrt(density/nose_radius)/rocket1.specific_heat/(rocket1.mass_empty+fuel.mass) #the 25 sqm is the SA of the nose cone exposed to the air friction
         skin_temp+=fric_temp
     else:
         skin_temp = 0
     tot_skin_temp = temp + skin_temp
-    print(tot_skin_temp)
-    skin_temps.append(tot_skin_temp)
-    if tot_skin_temp >= 1923.15:  #This reentry temp is totally made up based on space shuttle values
+   # print(temp)
+    if skin_temp<0:
+
+        print(np.linalg.norm(rocket_vel),tot_skin_temp,density,fric_temp)
+
+    if skin_temp >= 1923.15:  #This reentry temp is totally made up based on space shuttle values
         running = False
         print('Burnt up on reentry or ascent')
 
-    if t > 50000 or radius<earth.radius:
+    if t > 7000 or radius<earth.radius:
         running = False
         break
     zpos.append(engine1.pos[2])
     ypos.append(engine1.pos[1])
     xpos.append((engine1.pos[0]))
     ttlforce.append((np.linalg.norm(total_force)))
-
+    skin_temps.append(skin_temp)
     dragforce.append(np.linalg.norm(drag_force))
     time1.append(t)
     time.append(t)
@@ -183,7 +190,7 @@ plt.title('Drag Force')
 plt.plot(time,dragforce,color = 'r')
 plt.show()
 plt.title('Skin Temp')
-plt.plot(time,temps)
+plt.plot(time,skin_temps)
 plt.show()
 # plt.title('Density')
 # plt.plot(time,densitys)
