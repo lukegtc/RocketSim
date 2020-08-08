@@ -14,7 +14,7 @@ engine2 = rocket1.Engine(mdot=845)
 #rocket thrust force
 rocket1.thrust = np.array([0,0,7605e3])
 #exit velocity
-ve = np.array([0,0,1000])
+ve = np.array([0,0,700])
 dt = 0.1
 t = 0
 rocket1.mass = 22200
@@ -70,11 +70,11 @@ while running:
 
     else:
         engine1.gimbal[0] = -pi/2
-    if engine1.gimbal[2]>= -np.pi/2:
-        engine1.gimbal-=np.array([0,0,pi/2/1800])
-
-    else:
-        engine1.gimbal[2] = -pi/2
+    # if engine1.gimbal[2]>= -np.pi/2:
+    #     engine1.gimbal-=np.array([0,0,pi/2/1800])
+    #
+    # else:
+    #     engine1.gimbal[2] = -pi/2
     matrices = Matrices()
     roll_mat = matrices.roll_matrix(engine1.gimbal[0]) #around x axis
     pitch_mat = matrices.pitch_matrix(engine1.gimbal[1]) #around the y axis
@@ -91,17 +91,17 @@ while running:
     fuel.mass=fuel.mass - dt*engine1.mdot-dt*engine2.mdot
 
     #Drag force change
-    if engine1.pos[2]<0:
+    if radius<earth.radius:
         drag_force = np.array([0,0,0])
-
+        rocket_vel = np.array([0,0,0])
     else:
         if np.linalg.norm(rocket_vel) != 0.:
-            drag_force = -0.5*density*(np.linalg.norm(rocket_vel)**2)*rocket1.area*rocket1.cD*(rocket_vel/np.linalg.norm(rocket_vel))
+            drag_force = -0.5*density*(np.linalg.norm(rocket_vel)**2)*rocket1.area*rocket1.cD*rocket_vel/(np.linalg.norm(rocket_vel))
         else:
             drag_force = np.array([0,0,0])
-
+    print(drag_force,radius)
     #summation of all forces acting on the rocket
-    total_force = (rocket1.mass_empty+fuel.mass)*(engine1.pos/radius)*-9.80665+drag_force+np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,9*thrust1)))#+thrust2*8
+    total_force = (rocket1.mass_empty+fuel.mass)*(engine1.pos/radius)*-9.80665+np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,9*thrust1)))+drag_force#+thrust2*8
 
     rocket_accel = total_force/(rocket1.mass_empty+fuel.mass)
     rocket_vel +=rocket_accel*dt
@@ -110,7 +110,7 @@ while running:
     temps.append(temp)
     t+=dt
 
-    if t > 10000 or radius<earth.radius:
+    if t > 15000 or radius<earth.radius:
         running = False
         break
     zpos.append(engine1.pos[2])
@@ -118,7 +118,7 @@ while running:
     xpos.append((engine1.pos[0]))
     ttlforce.append((np.linalg.norm(total_force)))
 
-  #  dragforce.append(drag_force)
+    dragforce.append(np.linalg.norm(drag_force))
     time1.append(t)
     time.append(t)
     densitys.append(density)
@@ -160,9 +160,12 @@ circle2 = plt.Circle((0,0),6371e3, color='b')
 ax1.add_artist(circle2)
 plt.plot(xpos,zpos,color = 'r')
 plt.show()
-# plt.title('Drag Force')
-# plt.plot(time,dragforce)
-# plt.show()
+plt.title('Radius')
+plt.plot(time,rads)
+plt.show()
+plt.title('Drag Force')
+plt.plot(time,dragforce,color = 'r')
+plt.show()
 # plt.title('Density')
 # plt.plot(time,densitys)
 # plt.show()
