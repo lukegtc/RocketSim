@@ -30,7 +30,7 @@ GM = 3.986004418e14
 earth = Planet(6371e3,g0,layers,avals,base_temp,base_press,r,GM)
 engine1.pos = np.array([0.,0.,0. + earth.radius])
 #fuel created
-fuel = rocket1.Fuel(410900)
+fuel = rocket1.Fuel(418700)
 
 
 running =True
@@ -54,7 +54,7 @@ orbit_vel = sqrt(earth.GM/(earth.r+orbital_alt))
 radius = earth.radius
 skin_temp = 0
 while running:
-    rocket1.mass_empty = 22200.
+    rocket1.mass_empty = 27200. #estimate from NASA estimated vals
     radius = sqrt(engine1.pos[0]**2 + engine1.pos[1]**2 + (engine1.pos[2])**2)
     # theta = np.arctan(sqrt(engine1.pos[0]**2 + engine1.pos[1]**2)/(engine1.pos[2]+earth.radius))
     # psi = np.arctan(engine1.pos[1]/engine1.pos[0])

@@ -1,3 +1,19 @@
 Please include any sources for your findings (equations, values for rockets etc.) in this file
-
+Spec Sheets for F9
 https://www.wikiwand.com/en/Falcon_9_Full_Thrust
+
+https://www.spacex.com/media/falcon_users_guide_042020.pdf
+
+https://sma.nasa.gov/LaunchVehicle/assets/spacex-falcon-9-v1.2-data-sheet.pdf
+
+
+Temp of LOX in F9
+https://space.stackexchange.com/questions/13127/is-the-supercooled-lox-used-in-falcon-9-full-thrust-a-first#:~:text=mark.,66%20K%20(%2D340%20F).
+
+Calculating density of supercooled stuff
+https://webbook.nist.gov/chemistry/fluid/
+
+https://www.engineeringtoolbox.com/individual-universal-gas-constant-d_588.html
+
+Density of RP1
+https://www.govinfo.gov/content/pkg/GOVPUB-C13-18e6f8b04c5baea8df583f63c83ce583/pdf/GOVPUB-C13-18e6f8b04c5baea8df583f63c83ce583.pdf

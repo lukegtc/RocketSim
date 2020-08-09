@@ -26,31 +26,50 @@ class Planet:
 
 
 
-
+#height is pulled from a NASA estimate
 
 class Rocket:
-    def __init__(self,cD = 0.3,diameter = 3.7,thrust = np.array([0,0,0]),cgpos = np.array([0,0,0]),mass = 0,stblzrforce = np.array([0,0,0]),surface_area = 0,height = 0,specific_heat = 1000):
+    def __init__(self,cD = 0.3,diameter = 3.7,thrust = np.array([0,0,0]),mass = 0,
+                 stblzrforce = np.array([0,0,0]),surface_area = 0,height = 40.9,specific_heat = 1000,
+                 payload_cg = np.array([0.,0.,0.]),payload_mass = 0):
         self.thrust = thrust
-        self.cgpos = cgpos
+
         self.mass_empty = mass
         self.stblzrforce = stblzrforce
         self.surface_area = surface_area
         self.height = height
         self.cD = cD
         self.diameter = diameter
+        self.payload_mass = payload_mass
         self.area = pi*(self.diameter/2)**2
+        self.cgpos_empty = np.array([0.,0.,self.height/2])
         self.specific_heat = specific_heat #just looked up some similar vals of material similar to the falcon 9 skin
+        self.tot_cgpos_empty = (self.mass_empty*self.cgpos_empty + self.payload_mass*payload_cg)/(self.payload_mass+self.mass_empty)
+
 
     class GridFin:
         def __init__(self, angle, size):
             self.angle = angle
             self.size = size
-
+    #loxtoprop is the ratio of liquid oxygen to the total fuel mass (which is lox + kerosene in the case of the F9)
     class Fuel:
-        def __init__(self,mass):
+        def __init__(self,mass,loxtotot = 0.699,loxtemp = 66,fueltemp = 266.5,radius = 3.7/2):
             self.mass = mass
-            self.volume = mass
-            pass
+
+            self.loxtemp = loxtemp
+            self.fueltemp = fueltemp
+            self.loxdensity = 1255. #for LOX at 66K
+            self.loxmass = loxtotot*mass
+            self.propmass = (1-loxtotot)*mass
+            self.propdensity = 818 #for RP1 at 266.5
+            self.loxvol = self.loxmass/self.loxdensity
+            self.propvol = self.propmass/self.propdensity
+            self.radius = radius
+        def len_finder(self): #to find the length of the container for the prop and LOX. This is not the total length but simply part of it
+            return ((self.loxvol-pi*self.radius**3 * 4/3)/(pi*self.radius**2),
+                    (self.propvol-pi*self.radius**3*2/3-(pi*self.radius**3-pi*self.radius**3*2/3))/(pi*self.radius**2))
+
+
 
 
     class Engine:
