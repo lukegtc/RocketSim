@@ -49,6 +49,8 @@ class Rocket:
     class Fuel:
         def __init__(self,mass):
             self.mass = mass
+            self.volume = mass
+            pass
 
 
     class Engine:
@@ -58,6 +60,13 @@ class Rocket:
             self.mdot = mdot
             self.pos = pos
             self.gimbal = gimbal
+
+        def engine2bodygimbal(self,cgpos):
+
+
+
+            bodygimbal = np.array([0,0,0])
+            return bodygimbal
 class Matrices:
 
     def roll_matrix(self,gamma):

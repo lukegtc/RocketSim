@@ -67,6 +67,7 @@ while running:
 
     engine1.isp = ve/earth.g0
     #engine1 gimballing
+    #Relation of gimballed engine to pitch, roll and yaw angle of rocket
     if engine1.gimbal[0] >=-np.pi/2:
 
         engine1.gimbal-= np.array([pi/2/1800,0,0])
@@ -102,9 +103,12 @@ while running:
             drag_force = -0.5*density*(np.linalg.norm(rocket_vel)**2)*rocket1.area*rocket1.cD*rocket_vel/(np.linalg.norm(rocket_vel))
         else:
             drag_force = np.array([0,0,0])
-
+    # if np.linalg.norm(rocket_vel) == 0:
+    #     norm_vel = 1
+    # else:
+    #     norm_vel = np.linalg.norm(rocket_vel)
     #summation of all forces acting on the rocket
-    total_force = (rocket1.mass_empty+fuel.mass)*(engine1.pos/radius)*-9.80665+np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,9*thrust1)))+drag_force#+thrust2*8
+    total_force = (rocket1.mass_empty+fuel.mass)*(engine1.pos/radius)*-9.80665+np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,thrust2*8+thrust1)))+drag_force
 
 
     rocket_accel = total_force/(rocket1.mass_empty+fuel.mass)
