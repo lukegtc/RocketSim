@@ -73,11 +73,11 @@ while running:
 
     else:
         engine1.gimbal[0] = -pi/2
-    # if engine1.gimbal[2]>= -np.pi/2:
-    #     engine1.gimbal-=np.array([0,0,pi/2/1800])
-    #
-    # else:
-    #     engine1.gimbal[2] = -pi/2
+    if engine1.gimbal[2]>= -np.pi/2:
+        engine1.gimbal-=np.array([0,0,pi/2/1800])
+
+    else:
+        engine1.gimbal[2] = -pi/2
     matrices = Matrices()
     roll_mat = matrices.roll_matrix(engine1.gimbal[0]) #around x axis
     pitch_mat = matrices.pitch_matrix(engine1.gimbal[1]) #around the y axis
@@ -102,14 +102,13 @@ while running:
             drag_force = -0.5*density*(np.linalg.norm(rocket_vel)**2)*rocket1.area*rocket1.cD*rocket_vel/(np.linalg.norm(rocket_vel))
         else:
             drag_force = np.array([0,0,0])
-  #  print(drag_force,radius)
+
     #summation of all forces acting on the rocket
     total_force = (rocket1.mass_empty+fuel.mass)*(engine1.pos/radius)*-9.80665+np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,9*thrust1)))+drag_force#+thrust2*8
-   # if radius <earth.radius+86000:
-      #  print(drag_force,total_force,radius)
+
 
     rocket_accel = total_force/(rocket1.mass_empty+fuel.mass)
-    print(rocket_accel,rocket_vel)
+
     rocket_vel +=rocket_accel*dt
     engine1.pos +=rocket_vel*dt
     temps.append(temp)
@@ -118,16 +117,15 @@ while running:
     #change in temp due to atmosphere
     nose_radius = 0.7 #don't know if this is true but eh close enough for F9
     if radius<= 6371e3 + earth.layers[-1]*10**3:
-
-        fric_temp = dt*dt*1.83*10**(-4)*25*np.linalg.norm(rocket_vel)**3*sqrt(density/nose_radius)/rocket1.specific_heat/(rocket1.mass_empty+fuel.mass) #the 25 sqm is the SA of the nose cone exposed to the air friction
+        #added temp per dt
+        fric_temp = 1.83*10**(-4)*25*np.linalg.norm(rocket_vel)**3*sqrt(density/nose_radius)/rocket1.specific_heat/(rocket1.mass_empty+fuel.mass) #the 25 sqm is the SA of the nose cone exposed to the air friction
         skin_temp+=fric_temp
     else:
-        skin_temp = 0
-    tot_skin_temp = temp + skin_temp
-   # print(temp)
-    if skin_temp<0:
+        if skin_temp >=2:
+            skin_temp-=  0.1 #honestly have no clue if this is how fast heat dissipates
 
-        print(np.linalg.norm(rocket_vel),tot_skin_temp,density,fric_temp)
+    tot_skin_temp = temp + skin_temp
+
 
     if skin_temp >= 1923.15:  #This reentry temp is totally made up based on space shuttle values
         running = False
@@ -147,7 +145,7 @@ while running:
     densitys.append(density)
     temps.append(temp)
     presss.append(press)
-    rads.append(radius)
+    rads.append(radius-6371e3)
 mpl.use('Qt5Agg')
 fig = plt.figure()
 # Make data
@@ -178,12 +176,13 @@ plt.plot(ypos,zpos,color = 'r')
 plt.show()
 
 fig1, ax1 = plt.subplots()
+plt.title('X-Z Plot')
 circle2 = plt.Circle((0,0),6371e3, color='b')
 
 ax1.add_artist(circle2)
 plt.plot(xpos,zpos,color = 'r')
 plt.show()
-plt.title('Radius')
+plt.title('Altitude')
 plt.plot(time,rads)
 plt.show()
 plt.title('Drag Force')
