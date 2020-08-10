@@ -8,6 +8,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 #rocket created
 rocket1 = Rocket()
+rocket1.mass_empty = 27200.
 #engine Created
 engine1 = rocket1.Engine(mdot=845)
 engine2 = rocket1.Engine(mdot=845)
@@ -54,7 +55,7 @@ orbit_vel = sqrt(earth.GM/(earth.r+orbital_alt))
 radius = earth.radius
 skin_temp = 0
 while running:
-    rocket1.mass_empty = 27200. #estimate from NASA estimated vals
+     #estimate from NASA estimated vals
     radius = sqrt(engine1.pos[0]**2 + engine1.pos[1]**2 + (engine1.pos[2])**2)
     # theta = np.arctan(sqrt(engine1.pos[0]**2 + engine1.pos[1]**2)/(engine1.pos[2]+earth.radius))
     # psi = np.arctan(engine1.pos[1]/engine1.pos[0])
@@ -68,7 +69,7 @@ while running:
     engine1.isp = ve/earth.g0
     #engine1 gimballing
     #Relation of gimballed engine to pitch, roll and yaw angle of rocket
-    if engine1.gimbal[0] >=-np.pi/2:
+    if engine1.gimbal[0] >=-np.pi:
 
         engine1.gimbal-= np.array([pi/2/1800,0,0])
 

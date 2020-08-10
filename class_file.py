@@ -29,7 +29,7 @@ class Planet:
 #height is pulled from a NASA estimate
 
 class Rocket:
-    def __init__(self,cD = 0.3,diameter = 3.7,thrust = np.array([0,0,0]),mass = 0,
+    def __init__(self,cD = 0.3,diameter = 3.7,thrust = np.array([0,0,0]),mass = 1.,
                  stblzrforce = np.array([0,0,0]),surface_area = 0,height = 40.9,specific_heat = 1000,
                  payload_cg = np.array([0.,0.,0.]),payload_mass = 0):
         self.thrust = thrust
