@@ -31,7 +31,8 @@ class Planet:
 class Rocket:
     def __init__(self,cD = 0.3,diameter = 3.7,thrust = np.array([0,0,0]),mass = 1.,
                  stblzrforce = np.array([0,0,0]),surface_area = 0,height = 40.9,specific_heat = 1000,
-                 payload_cg = np.array([0.,0.,0.]),payload_mass = 0):
+                 payload_cg = np.array([0.,0.,0.]),payload_mass = 0,prop_cg = np.array([0.,0.,0.])):
+        self.fuel = self.Fuel()
         self.thrust = thrust
 
         self.mass_empty = mass
@@ -40,11 +41,25 @@ class Rocket:
         self.height = height
         self.cD = cD
         self.diameter = diameter
+        self.prop_cg = prop_cg
+        self.prop_mass = self.fuel.mass
         self.payload_mass = payload_mass
         self.area = pi*(self.diameter/2)**2
         self.cgpos_empty = np.array([0.,0.,self.height/2])
         self.specific_heat = specific_heat #just looked up some similar vals of material similar to the falcon 9 skin
         self.tot_cgpos_empty = (self.mass_empty*self.cgpos_empty + self.payload_mass*payload_cg)/(self.payload_mass+self.mass_empty)
+        self.tot_cgpos = (self.tot_cgpos_empty*(self.mass_empty+self.payload_mass)+self.prop_cg*self.prop_mass)/(self.mass_empty+self.payload_mass + self.prop_mass)
+        #around cg at all times (I have no clue if this is correct i sucked at this angular stuff help)
+        self.moi_mat = np.array([[(self.prop_mass+self.mass_empty+self.payload_mass)*(3*(self.diameter/2)**2 + self.height**2)/12],
+                  [(self.prop_mass+self.mass_empty+self.payload_mass)*(3*(self.diameter/2)**2 + self.height**2)/12],
+                  [0.5*(self.prop_mass+self.mass_empty+self.payload_mass)*(self.diameter/2)**2]])
+
+    def angular_accel_mat(self,torque):
+        angular_accel = np.matmul(np.linalg.inv(self.moi_mat,torque))
+        return angular_accel
+
+
+
 
 
     class GridFin:
@@ -53,7 +68,7 @@ class Rocket:
             self.size = size
     #loxtoprop is the ratio of liquid oxygen to the total fuel mass (which is lox + kerosene in the case of the F9)
     class Fuel:
-        def __init__(self,mass,loxtotot = 0.699,loxtemp = 66,fueltemp = 266.5,radius = 3.7/2):
+        def __init__(self,mass = 0,loxtotot = 0.699,loxtemp = 66,fueltemp = 266.5,radius = 3.7/2):
             self.mass = mass
 
             self.loxtemp = loxtemp
@@ -80,12 +95,15 @@ class Rocket:
             self.pos = pos
             self.gimbal = gimbal
 
-        def engine2bodygimbal(self,cgpos):
+        def engine2bodygimbal(self,cgpos,pitch_mat,roll_mat,yaw_mat):
+            new_thrust = np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,self.thrust)))
+            moments = np.matmul(np.array([[0,new_thrust[2],new_thrust[1]],
+                                          [new_thrust[2],0,new_thrust[0]],
+                                          [new_thrust[1],new_thrust[0],0]]),
+                                np.abs(cgpos))
+            return moments
 
 
-
-            bodygimbal = np.array([0,0,0])
-            return bodygimbal
 class Matrices:
 
     def roll_matrix(self,gamma):

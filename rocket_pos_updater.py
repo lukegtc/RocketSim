@@ -54,6 +54,8 @@ orbital_alt = 500e3
 orbit_vel = sqrt(earth.GM/(earth.r+orbital_alt))
 radius = earth.radius
 skin_temp = 0
+angular_vel = np.array([0.,0.,0.])
+total_gimbal = np.array([0.,0.,0.])
 while running:
      #estimate from NASA estimated vals
     radius = sqrt(engine1.pos[0]**2 + engine1.pos[1]**2 + (engine1.pos[2])**2)
@@ -69,6 +71,7 @@ while running:
     engine1.isp = ve/earth.g0
     #engine1 gimballing
     #Relation of gimballed engine to pitch, roll and yaw angle of rocket
+    #This is the gimbal of the engine
     if engine1.gimbal[0] >=-np.pi:
 
         engine1.gimbal-= np.array([pi/2/1800,0,0])
@@ -85,6 +88,16 @@ while running:
     pitch_mat = matrices.pitch_matrix(engine1.gimbal[1]) #around the y axis
     yaw_mat = matrices.yaw_matrix(engine1.gimbal[2]) #around the z axis
 
+    #this is the gimbal of the rocket
+
+    moment_from_gimbal_engine = engine1.engine2bodygimbal(rocket1.tot_cgpos,pitch_mat,roll_mat,yaw_mat)
+    angular_accel = rocket1.angular_accel_mat(moment_from_gimbal_engine)
+    angular_vel += angular_accel*dt
+    total_gimbal +=angular_vel*dt
+
+    tot_roll_mat = matrices.roll_matrix(total_gimbal[0])
+    tot_pitch_mat = matrices.pitch_matrix(total_gimbal[1])
+    tot_yaw_mat = matrices.yaw_matrix(total_gimbal[2])
     #fuel mass change
     if fuel.mass <=0:
         engine1.mdot = 0
@@ -109,7 +122,7 @@ while running:
     # else:
     #     norm_vel = np.linalg.norm(rocket_vel)
     #summation of all forces acting on the rocket
-    total_force = (rocket1.mass_empty+fuel.mass)*(engine1.pos/radius)*-9.80665+np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,thrust2*8+thrust1)))+drag_force
+    total_force = (rocket1.mass_empty+fuel.mass)*(engine1.pos/radius)*-9.80665+np.matmul(tot_yaw_mat,np.matmul(tot_pitch_mat,np.matmul(tot_roll_mat,thrust2*8+thrust1)))+drag_force
 
 
     rocket_accel = total_force/(rocket1.mass_empty+fuel.mass)
