@@ -50,12 +50,13 @@ class Rocket:
         self.tot_cgpos_empty = (self.mass_empty*self.cgpos_empty + self.payload_mass*payload_cg)/(self.payload_mass+self.mass_empty)
         self.tot_cgpos = (self.tot_cgpos_empty*(self.mass_empty+self.payload_mass)+self.prop_cg*self.prop_mass)/(self.mass_empty+self.payload_mass + self.prop_mass)
         #around cg at all times (I have no clue if this is correct i sucked at this angular stuff help)
-        self.moi_mat = np.array([[(self.prop_mass+self.mass_empty+self.payload_mass)*(3*(self.diameter/2)**2 + self.height**2)/12],
-                  [(self.prop_mass+self.mass_empty+self.payload_mass)*(3*(self.diameter/2)**2 + self.height**2)/12],
-                  [0.5*(self.prop_mass+self.mass_empty+self.payload_mass)*(self.diameter/2)**2]])
+        self.moi_mat = np.array([[(self.prop_mass+self.mass_empty+self.payload_mass)*(3*(self.diameter/2)**2 + self.height**2)/12 + (self.mass_empty+self.payload_mass + self.prop_mass)*(self.tot_cgpos[1]**2 + self.tot_cgpos[2]**2),0.,0.],
+                  [0.,(self.prop_mass+self.mass_empty+self.payload_mass)*(3*(self.diameter/2)**2 + self.height**2)/12 + (self.mass_empty+self.payload_mass + self.prop_mass)*(self.tot_cgpos[0]**2 + self.tot_cgpos[2]**2),0.],
+                  [0.,0.,0.5*(self.prop_mass+self.mass_empty+self.payload_mass)*(self.diameter/2)**2 + (self.mass_empty+self.payload_mass + self.prop_mass)*(self.tot_cgpos[1]**2 + self.tot_cgpos[0]**2)]])
 
     def angular_accel_mat(self,torque):
-        angular_accel = np.matmul(np.linalg.inv(self.moi_mat,torque))
+
+        angular_accel = np.matmul(np.linalg.inv(self.moi_mat),torque)
         return angular_accel
 
 
@@ -97,10 +98,12 @@ class Rocket:
 
         def engine2bodygimbal(self,cgpos,pitch_mat,roll_mat,yaw_mat):
             new_thrust = np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,self.thrust)))
+
             moments = np.matmul(np.array([[0,new_thrust[2],new_thrust[1]],
                                           [new_thrust[2],0,new_thrust[0]],
                                           [new_thrust[1],new_thrust[0],0]]),
-                                np.abs(cgpos))
+                                abs(cgpos))
+
             return moments
 
 

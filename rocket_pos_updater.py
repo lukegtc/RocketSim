@@ -14,11 +14,12 @@ engine1 = rocket1.Engine(mdot=845)
 engine2 = rocket1.Engine(mdot=845)
 #rocket thrust force
 rocket1.thrust = np.array([0,0,7605e3])
+
 #exit velocity
 ve = np.array([0,0,700])
 dt = 0.1
 t = 0
-
+engine1.thrust = ve*engine1.mdot
 #atmosphere values
 layers = [0.,11.,20.,32.,47.,51.,71.,86.]
 avals = [-6.5,0,1,2.8,0,-2.8,-2.]
@@ -57,6 +58,8 @@ skin_temp = 0
 angular_vel = np.array([0.,0.,0.])
 total_gimbal = np.array([0.,0.,0.])
 while running:
+    rocket1.prop_mass=fuel.mass
+
      #estimate from NASA estimated vals
     radius = sqrt(engine1.pos[0]**2 + engine1.pos[1]**2 + (engine1.pos[2])**2)
     # theta = np.arctan(sqrt(engine1.pos[0]**2 + engine1.pos[1]**2)/(engine1.pos[2]+earth.radius))
@@ -71,18 +74,18 @@ while running:
     engine1.isp = ve/earth.g0
     #engine1 gimballing
     #Relation of gimballed engine to pitch, roll and yaw angle of rocket
-    #This is the gimbal of the engine
-    if engine1.gimbal[0] >=-np.pi:
+    # #This is the gimbal of the engine
+    if fuel.mass<= 0.5*418700:
 
-        engine1.gimbal-= np.array([pi/2/1800,0,0])
+        engine1.gimbal = np.array([pi/2/180,0,0])
 
-    else:
-        engine1.gimbal[0] = -pi/2
-    if engine1.gimbal[2]>= -np.pi/2:
-        engine1.gimbal-=np.array([0,0,pi/2/1800])
-
-    else:
-        engine1.gimbal[2] = -pi/2
+    # else:
+    #     engine1.gimbal[0] = -pi/2
+    # if engine1.gimbal[2]>= -np.pi/2:
+    #     engine1.gimbal-=np.array([0,0,pi/2/1800])
+    #
+    # else:
+    #     engine1.gimbal[2] = -pi/2
     matrices = Matrices()
     roll_mat = matrices.roll_matrix(engine1.gimbal[0]) #around x axis
     pitch_mat = matrices.pitch_matrix(engine1.gimbal[1]) #around the y axis
@@ -91,13 +94,15 @@ while running:
     #this is the gimbal of the rocket
 
     moment_from_gimbal_engine = engine1.engine2bodygimbal(rocket1.tot_cgpos,pitch_mat,roll_mat,yaw_mat)
-    angular_accel = rocket1.angular_accel_mat(moment_from_gimbal_engine)
+    angular_accel = rocket1.angular_accel_mat(moment_from_gimbal_engine) #CHECK THIS
+  #  print(angular_accel)
     angular_vel += angular_accel*dt
     total_gimbal +=angular_vel*dt
-
+    print(moment_from_gimbal_engine)
     tot_roll_mat = matrices.roll_matrix(total_gimbal[0])
     tot_pitch_mat = matrices.pitch_matrix(total_gimbal[1])
     tot_yaw_mat = matrices.yaw_matrix(total_gimbal[2])
+    #print(tot_roll_mat,tot_pitch_mat,tot_yaw_mat)
     #fuel mass change
     if fuel.mass <=0:
         engine1.mdot = 0
@@ -105,6 +110,7 @@ while running:
         fuel.mass = 0
 
     thrust1 = engine1.mdot * ve
+    thrust1 = np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,thrust1)))
     thrust2 = engine2.mdot*ve
     fuel.mass=fuel.mass - dt*engine1.mdot-dt*engine2.mdot*8
 
