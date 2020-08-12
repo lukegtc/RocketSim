@@ -14,9 +14,12 @@ engine1 = rocket1.Engine(mdot=845)
 engine2 = rocket1.Engine(mdot=845)
 #rocket thrust force
 rocket1.thrust = np.array([0,0,7605e3])
-
+actual_latitude = 28.5
+latitude = (actual_latitude-90)*pi/180
+longitude = 0*pi/180
 #exit velocity
-ve = np.array([0,0,700])
+ve_tot = 700
+ve = np.array([0,0,ve_tot])
 dt = 0.1
 t = 0
 engine1.thrust = ve*engine1.mdot
@@ -29,17 +32,20 @@ r = 287.
 #Planet created
 g0=9.80665
 GM = 3.986004418e14
+  # 28 degrees latitude
 earth = Planet(6371e3,g0,layers,avals,base_temp,base_press,r,GM)
-engine1.pos = np.array([0.,0.,0. + earth.radius])
+engine1.pos = np.array([0.,0.,0. + earth.radius]) #Changed
 #fuel created
 fuel = rocket1.Fuel(418700)
 
 
 running =True
-zpos = [6371e3,6371e3]
-ypos = [0,0]
-xpos = [0,0]
-time1 = [0,0]
+zpos = []
+ypos = []
+#zpos = [earth.radius*sin(latitude),earth.radius*sin(latitude)]
+#ypos = [-earth.radius*cos(latitude),-earth.radius*cos(latitude)]
+xpos = []
+time1 = []
 rads = []
 time = []
 ttlforce = []
@@ -48,7 +54,8 @@ densitys = []
 temps = []
 skin_temps = []
 presss = []
-rocket_vel = np.array([0.,0.,0.])
+vels = []
+rocket_vel = np.array([0.,0.,0.]) #Dont forget to change some stuff about relative velocity and position ya know
 off_pad = False
 #values for circular orbit
 orbital_alt = 500e3
@@ -75,9 +82,9 @@ while running:
     #engine1 gimballing
     #Relation of gimballed engine to pitch, roll and yaw angle of rocket
     # #This is the gimbal of the engine
-    if fuel.mass<= 0.5*418700:
-
-        engine1.gimbal = np.array([pi/2/1800,0,0])
+    # if fuel.mass<= 0.25*418700:
+    #
+    #     engine1.gimbal = np.array([pi/2/1800,0,0])
 
     # else:
     #     engine1.gimbal[0] = -pi/2
@@ -120,7 +127,10 @@ while running:
         rocket_vel = np.array([0.,0.,0.])
     else:
         if np.linalg.norm(rocket_vel) != 0.:
-            drag_force = -0.5*density*(np.linalg.norm(rocket_vel)**2)*rocket1.area*rocket1.cD*rocket_vel/(np.linalg.norm(rocket_vel))
+            drag_force = -0.5*density*(np.linalg.norm(rocket_vel-np.array([0.,0.,0.]))**2)*rocket1.area*rocket1.cD*rocket_vel/(np.linalg.norm(rocket_vel))
+            #fix something with the very last bit of the drag equation because its giving the wrong drag vectors i think invert the lat long stuff
+
+        #    print(rocket_vel,-np.array([0.,465.1*cos(latitude),465.1*sin(latitude)]))
         else:
             drag_force = np.array([0,0,0])
     # if np.linalg.norm(rocket_vel) == 0:
@@ -128,13 +138,18 @@ while running:
     # else:
     #     norm_vel = np.linalg.norm(rocket_vel)
     #summation of all forces acting on the rocket
-    total_force = (rocket1.mass_empty+fuel.mass)*(engine1.pos/radius)*-9.80665+np.matmul(tot_yaw_mat,np.matmul(tot_pitch_mat,np.matmul(tot_roll_mat,thrust2*8+thrust1)))+drag_force
+    rotated_thrust = np.matmul(tot_yaw_mat,np.matmul(tot_pitch_mat,np.matmul(tot_roll_mat,thrust2*8+thrust1)))
+    long_yaw_mat = matrices.yaw_matrix(longitude)
+    lat_roll_mat = matrices.roll_matrix(latitude)
+    lat_pitch_mat = matrices.pitch_matrix(-pi/2)
+    total_force =(rocket1.mass_empty+fuel.mass)*(engine1.pos/radius)*-9.80665+rotated_thrust+drag_force #Fix coordinate stuff
+
 
 
     rocket_accel = total_force/(rocket1.mass_empty+fuel.mass)
 
     rocket_vel +=rocket_accel*dt
-    engine1.pos +=rocket_vel*dt
+    engine1.pos +=(np.array([465.1*cos(latitude),465.1*sin(latitude),0.])+rocket_vel)*dt
     temps.append(temp)
 
     t+=dt
@@ -158,9 +173,10 @@ while running:
     if t > 7000 or radius<earth.radius:
         running = False
         break
-    zpos.append(engine1.pos[2])
-    ypos.append(engine1.pos[1])
-    xpos.append((engine1.pos[0]))
+    plotter_pos = np.matmul(long_yaw_mat,np.matmul(lat_pitch_mat,np.matmul(lat_roll_mat, (engine1.pos)))) #
+    zpos.append(plotter_pos[2])
+    ypos.append(plotter_pos[1])
+    xpos.append((plotter_pos[0]))
     ttlforce.append((np.linalg.norm(total_force)))
     skin_temps.append(tot_skin_temp)
     dragforce.append(np.linalg.norm(drag_force))
@@ -170,6 +186,7 @@ while running:
     temps.append(temp)
     presss.append(press)
     rads.append(radius-6371e3)
+    vels.append(np.linalg.norm(rocket_vel))
 mpl.use('Qt5Agg')
 fig = plt.figure()
 # Make data
@@ -197,6 +214,8 @@ plt.title('Y-Z Plot')
 circle1 = plt.Circle((0,0),6371e3,color='b')
 ax.add_artist(circle1)
 plt.plot(ypos,zpos,color = 'r')
+plt.xlabel('Y')
+plt.ylabel('Z')
 plt.show()
 
 fig1, ax1 = plt.subplots()
@@ -205,9 +224,23 @@ circle2 = plt.Circle((0,0),6371e3, color='b')
 
 ax1.add_artist(circle2)
 plt.plot(xpos,zpos,color = 'r')
+plt.xlabel('X')
+plt.ylabel('Z')
 plt.show()
+
+fig2, ax2 = plt.subplots()
+plt.title('X-Y Plot')
+circle3 = plt.Circle((0,0),6371e3, color='b')
+
+ax2.add_artist(circle3)
+plt.plot(xpos,ypos,color = 'r')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.show()
+
 plt.title('Altitude')
 plt.plot(time,rads)
+print(max(rads))
 plt.show()
 plt.title('Drag Force')
 plt.plot(time,dragforce,color = 'r')
@@ -215,6 +248,7 @@ plt.show()
 plt.title('Skin Temp')
 plt.plot(time,skin_temps)
 plt.show()
+
 # plt.title('Density')
 # plt.plot(time,densitys)
 # plt.show()
