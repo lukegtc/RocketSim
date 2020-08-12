@@ -81,11 +81,14 @@ class Rocket:
             self.loxvol = self.loxmass/self.loxdensity
             self.propvol = self.propmass/self.propdensity
             self.radius = radius
-        def len_finder(self): #to find the length of the container for the prop and LOX. This is not the total length but simply part of it
-            return ((self.loxvol-pi*self.radius**3 * 4/3)/(pi*self.radius**2),
-                    (self.propvol-pi*self.radius**3*2/3-(pi*self.radius**3-pi*self.radius**3*2/3))/(pi*self.radius**2))
+         #to find the length of the container for the prop and LOX. This is not the total length but simply part of it
+            self.loxlen = (self.loxvol-pi*self.radius**3 * 4/3)/(pi*self.radius**2)
+            self.proplen = (self.propvol-pi*self.radius**3*2/3-(pi*self.radius**3-pi*self.radius**3*2/3))/(pi*self.radius**2)
 
-
+        def prop_cg(self):
+            v = pi*h*(3*r**2 - h**2)/3#formula for partial volume of a hemisphere
+            if self.loxvol>= self.loxlen*pi*self.radius**2 + pi*self.radius**3*2/3 and self.loxvol<=self.loxlen*pi*self.radius**2 + pi*self.radius**3*4/3:
+                pass #cg pos if theres still lox in the upper hemisphere of the tank
 
 
     class Engine:

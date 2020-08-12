@@ -77,7 +77,7 @@ while running:
     # #This is the gimbal of the engine
     if fuel.mass<= 0.5*418700:
 
-        engine1.gimbal = np.array([pi/2/180,0,0])
+        engine1.gimbal = np.array([pi/2/1800,0,0])
 
     # else:
     #     engine1.gimbal[0] = -pi/2
@@ -98,7 +98,7 @@ while running:
   #  print(angular_accel)
     angular_vel += angular_accel*dt
     total_gimbal +=angular_vel*dt
-    print(moment_from_gimbal_engine)
+
     tot_roll_mat = matrices.roll_matrix(total_gimbal[0])
     tot_pitch_mat = matrices.pitch_matrix(total_gimbal[1])
     tot_yaw_mat = matrices.yaw_matrix(total_gimbal[2])
