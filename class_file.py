@@ -87,8 +87,33 @@ class Rocket:
 
         def prop_cg(self):
          #   v = pi*h*(3*r**2 - h**2)/3#formula for partial volume of a hemisphere
-            if self.loxvol>= self.loxlen*pi*self.radius**2 + pi*self.radius**3*2/3 and self.loxvol<=self.loxlen*pi*self.radius**2 + pi*self.radius**3*4/3:
-                pass #cg pos if theres still lox in the upper hemisphere of the tank
+            if self.loxvol> self.loxlen*pi*self.radius**2 + pi*self.radius**3*2/3 and self.loxvol<=self.loxlen*pi*self.radius**2 + pi*self.radius**3*4/3:
+                loxvol_upper = self.loxvol - self.loxlen*pi*self.radius**2 + pi*self.radius**3*2/3
+                h = self.radius-3*loxvol_upper/(2*pi*self.radius**2)
+                loxupper_mass = loxvol_upper*self.loxdensity
+                zbar_upper = (3*(2*self.radius-h)**2/(4*(3*self.radius-h)))#cg pos if theres still lox in the upper hemisphere of the tank
+                cg_lox_upper = np.array([0.,0.,((self.radius**4*self.loxdensity*pi/4)-(self.loxdensity*2*pi*self.radius**3/3-loxupper_mass)*zbar_upper)/loxupper_mass])
+
+                lox_cg = ((cg_lox_upper+self.loxlen+self.radius)*loxupper_mass+(self.loxlen*pi*self.radius**2*self.loxdensity)*(self.loxlen/2 + self.radius) + (self.radius - 3*self.radius/8)*(pi*self.radius**3*2/3*self.loxdensity))/self.loxmass
+            elif self.loxvol> pi*self.radius**3*2/3 and self.loxvol<= self.loxlen*pi*self.radius**2 + pi*self.radius**3*2/3:
+                self.loxlen = (self.loxvol - pi * self.radius ** 3 * 2 / 3) / (pi * self.radius ** 2)
+
+                lox_cg = np.array([0.,0.,((self.loxlen/2)*(self.loxvol - pi * self.radius ** 3 * 2 / 3)*self.loxdensity+(pi * self.radius ** 3 * 2 / 3)*self.loxdensity*(self.radius - 3*self.radius/8))/self.loxmass])
+
+            elif self.loxvol > 0. and self.loxvol<=pi*self.radius**3*2/3:
+                loxvol_lower = pi * self.radius ** 3 * 2 / 3
+                h = self.radius - 3 * loxvol_lower / (2 * pi * self.radius ** 2)
+                lox_cg = np.array([0.,0.,3*self.radius/8-(3*(2*self.radius-h)**2/(4*(3*self.radius-h)))])
+            else:
+                lox_cg = np.array([0.,0.,0.])
+
+            if self.propvol> self.proplen*pi*self.radius**2 + pi*self.radius**3*2/3 and self.propvol <= self.proplen*pi*self.radius**2 + pi*self.radius**3*2/3 + self.radius**3*pi/3:
+                pass
+
+
+
+
+
 
 
     class Engine:
