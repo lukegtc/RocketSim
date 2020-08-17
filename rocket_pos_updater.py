@@ -52,6 +52,7 @@ rads = []
 time = []
 ttlforce = []
 dragforce = []
+points = []
 densitys = []
 temps = []
 skin_temps = []
@@ -59,6 +60,7 @@ presss = []
 vels = []
 cg_vals = []
 moments= []
+vels2 = []
 rocket_vel = np.array([0.,0.,0.]) #Dont forget to change some stuff about relative velocity and position ya know
 off_pad = False
 #values for circular orbit
@@ -213,11 +215,11 @@ while running:
 
 
     plotter_pos = np.matmul(long_yaw_mat,np.matmul(lat_pitch_mat,np.matmul(lat_roll_mat, (engine1.pos)))) #
-
+    points.append(plotter_pos)
     #plotting section
     zpos.append(plotter_pos[2])
     ypos.append(plotter_pos[1])
-    xpos.append((plotter_pos[0]))
+    xpos.append(plotter_pos[0])
     ttlforce.append((np.linalg.norm(total_force)))
     skin_temps.append(tot_skin_temp)
     dragforce.append(np.linalg.norm(drag_force))
@@ -229,6 +231,8 @@ while running:
     presss.append(press)
     rads.append(radius-6371e3)
     vels.append(np.linalg.norm(rocket_vel))
+    vels2.append(rocket_vel/np.linalg.norm(rocket_vel))
+
     cg_vals.append(rocket1.tot_cgpos[2])
 mpl.use('Qt5Agg')
 fig = plt.figure()
