@@ -11,7 +11,10 @@ import numpy as np
 
 '''
 class Planet:
-    def __init__(self,radius,g0 = 9.80665,layers = [0,11,20,32,47,51,71,86], avals = [-6.5,0,1,2.8,0,-2.8,-2.],base_temp = 0,base_press = 0,r = 0,GM = 0):
+    def __init__(self,radius,g0 = 9.80665,
+                 layers = [0,11,20,32,47,51,71,86],
+                 avals = [-6.5,0,1,2.8,0,-2.8,-2.],
+                 base_temp = 0,base_press = 0,r = 0,GM = 0):
 
         self.radius = radius
         self.g0 = g0
@@ -47,12 +50,18 @@ class Rocket:
         self.area = pi*(self.diameter/2)**2
         self.cgpos_empty = np.array([0.,0.,self.height/2])
         self.specific_heat = specific_heat #just looked up some similar vals of material similar to the falcon 9 skin
-        self.tot_cgpos_empty = (self.mass_empty*self.cgpos_empty + self.payload_mass*payload_cg)/(self.payload_mass+self.mass_empty)
-        self.tot_cgpos = (self.tot_cgpos_empty*(self.mass_empty+self.payload_mass)+self.prop_cg*self.prop_mass)/(self.mass_empty+self.payload_mass + self.prop_mass)
+        self.tot_cgpos_empty = (self.mass_empty*self.cgpos_empty + self.payload_mass*payload_cg)/\
+                               (self.payload_mass+self.mass_empty)
+        self.tot_cgpos = (self.tot_cgpos_empty*(self.mass_empty+self.payload_mass)+self.prop_cg*self.prop_mass)/\
+                         (self.mass_empty+self.payload_mass + self.prop_mass)
         #around cg at all times (I have no clue if this is correct i sucked at this angular stuff help)
-        self.moi_mat = np.array([[(self.prop_mass+self.mass_empty+self.payload_mass)*(3*(self.diameter/2)**2 + self.height**2)/12 + (self.mass_empty+self.payload_mass + self.prop_mass)*(self.tot_cgpos[1]**2 + self.tot_cgpos[2]**2),0.,0.],
-                  [0.,(self.prop_mass+self.mass_empty+self.payload_mass)*(3*(self.diameter/2)**2 + self.height**2)/12 + (self.mass_empty+self.payload_mass + self.prop_mass)*(self.tot_cgpos[0]**2 + self.tot_cgpos[2]**2),0.],
-                  [0.,0.,0.5*(self.prop_mass+self.mass_empty+self.payload_mass)*(self.diameter/2)**2 + (self.mass_empty+self.payload_mass + self.prop_mass)*(self.tot_cgpos[1]**2 + self.tot_cgpos[0]**2)]])
+        self.moi_mat = np.array([[(self.prop_mass+self.mass_empty+self.payload_mass)*(3*(self.diameter/2)**2 +
+                                self.height**2)/12 + (self.mass_empty+self.payload_mass + self.prop_mass)*
+                                  (self.tot_cgpos[1]**2 + self.tot_cgpos[2]**2),0.,0.],
+                  [0.,(self.prop_mass+self.mass_empty+self.payload_mass)*(3*(self.diameter/2)**2 + self.height**2)/12 +
+                   (self.mass_empty+self.payload_mass + self.prop_mass)*(self.tot_cgpos[0]**2 + self.tot_cgpos[2]**2),0.],
+                  [0.,0.,0.5*(self.prop_mass+self.mass_empty+self.payload_mass)*(self.diameter/2)**2 +
+                   (self.mass_empty+self.payload_mass + self.prop_mass)*(self.tot_cgpos[1]**2 + self.tot_cgpos[0]**2)]])
 
     def angular_accel_mat(self,torque):
 
@@ -68,7 +77,7 @@ class Rocket:
             self.angle = angle
             self.size = size
     #loxtoprop is the ratio of liquid oxygen to the total fuel mass (which is lox + kerosene in the case of the F9)
-    class Fuel:
+    class Propellant:
         def __init__(self,mass = 0,loxtotot = 0.699,loxtemp = 66,fueltemp = 266.5,radius = 3.7/2):
             self.mass = mass
 
@@ -92,9 +101,10 @@ class Rocket:
                 h = self.radius-3*loxvol_upper/(2*pi*self.radius**2)
                 loxupper_mass = loxvol_upper*self.loxdensity
                 zbar_upper = (3*(2*self.radius-h)**2/(4*(3*self.radius-h)))#cg pos if theres still lox in the upper hemisphere of the tank
-                cg_lox_upper = np.array([0.,0.,((self.radius**4*self.loxdensity*pi/4)-(self.loxdensity*2*pi*self.radius**3/3-loxupper_mass)*zbar_upper)/loxupper_mass])
+                cg_lox_upper = np.array([0.,0.,((self.radius**4*self.loxdensity*pi/4)-(self.loxdensity*2*pi*self.radius**3/
+                                                                                       3-loxupper_mass)*zbar_upper)/loxupper_mass])
 
-                lox_cg = ((cg_lox_upper+self.loxlen+self.radius)*loxupper_mass+(self.loxlen*pi*self.radius**2*self.loxdensity)*(self.loxlen/2 + self.radius) + (self.radius - 3*self.radius/8)*(pi*self.radius**3*2/3*self.loxdensity))/self.loxmass
+                lox_cg = np.array([0.,0., ((cg_lox_upper+self.loxlen+self.radius)*loxupper_mass+(self.loxlen*pi*self.radius**2*self.loxdensity)*(self.loxlen/2 + self.radius) + (self.radius - 3*self.radius/8)*(pi*self.radius**3*2/3*self.loxdensity))/self.loxmass])
             elif self.loxvol> pi*self.radius**3*2/3 and self.loxvol<= self.loxlen*pi*self.radius**2 + pi*self.radius**3*2/3:
                 self.loxlen = (self.loxvol - pi * self.radius ** 3 * 2 / 3) / (pi * self.radius ** 2)
 
@@ -108,7 +118,36 @@ class Rocket:
                 lox_cg = np.array([0.,0.,0.])
 
             if self.propvol> self.proplen*pi*self.radius**2 + pi*self.radius**3*2/3 and self.propvol <= self.proplen*pi*self.radius**2 + pi*self.radius**3*2/3 + self.radius**3*pi/3:
-                pass
+                propvol_upper = self.propvol - self.proplen * pi * self.radius ** 2 + pi * self.radius ** 3 * 2 / 3
+                h = self.radius - 3 * propvol_upper / (2 * pi * self.radius ** 2)
+                propupper_mass = propvol_upper * self.propdensity
+                zbar_prop_upper = self.radius-(3 * (2 * self.radius - h) ** 2 / (4 * (
+                            3 * self.radius - h)))  # cg pos if theres still prop in the upper portion of the tank
+                cg_prop_upper = np.array([0., 0., ((self.radius ** 4 * self.propdensity * pi / 4) - (
+                            self.loxdensity * 2 * pi * self.radius ** 3 / 3 - propupper_mass) * zbar_prop_upper) / propupper_mass])
+
+
+                prop_cg = np.array([0.,0.,((cg_prop_upper + self.proplen + self.radius) * propupper_mass + (
+                            self.loxlen * pi * self.radius ** 2 * self.loxdensity) * (self.loxlen / 2 + self.radius) + (
+                                      self.radius - 3 * self.radius / 8) * (
+                                      pi * self.radius ** 3 * 2 / 3 * self.propdensity)) / self.propmass])
+
+            elif self.propvol>pi*self.radius**3*2/3 and self.propvol<= self.proplen*pi*self.radius**2 + pi*self.radius**3*2/3:
+                self.proplen = (self.propvol - pi * self.radius ** 3 * 2 / 3) / (pi * self.radius ** 2)
+
+                prop_cg = np.array([0., 0., ((self.proplen / 2) * (self.propvol - pi * self.radius ** 3 * 2 / 3) * self.propdensity +
+                                             (pi * self.radius ** 3 * 2 / 3) * self.propdensity *
+                                             (self.radius - 3 * self.radius / 8)) / self.propmass])
+
+
+
+            elif self.propvol> 0. and self.propvol<=pi*self.radius**3*2/3:
+                propvol_lower = pi * self.radius ** 3 * 2 / 3
+                h = self.radius - 3 * propvol_lower / (2 * pi * self.radius ** 2)
+                prop_cg = np.array([0., 0., 3 * self.radius / 8 - (3 * (2 * self.radius - h) ** 2 / (4 * (3 * self.radius - h)))])
+            else:
+                prop_cg = np.array([0.,0.,0.])
+
 
 
 

@@ -36,7 +36,7 @@ GM = 3.986004418e14
 earth = Planet(6371e3,g0,layers,avals,base_temp,base_press,r,GM)
 engine1.pos = np.array([0.,0.,0. + earth.radius]) #Changed
 #fuel created
-fuel = rocket1.Fuel(418700)
+fuel = rocket1.Propellant(418700)
 
 
 running =True
