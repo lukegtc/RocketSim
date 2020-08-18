@@ -165,9 +165,9 @@ class Propellant:
 
 
 class Engine:
-    def __init__(self,thrust = 0,mdot = 0, pos = 0, isp = 330,gimbal = np.array([0.,0.,0.])):
+    def __init__(self,mdot = 0, pos = 0,gimbal = np.array([0.,0.,0.]),g0 = 9.80665,ve = 1000,thrust=0.):
         self.thrust = thrust
-        self.isp = isp
+        self.isp = ve*g0
         self.mdot = mdot
         self.pos = pos
         self.gimbal = gimbal
