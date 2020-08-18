@@ -5,26 +5,32 @@ from Atmosphere import *
 from math import *
 import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D
-
+payload = 22800
 #rocket created
 rocket1 = Rocket(prop_mass=418700.,mass_empty=27200.)
+rocket2 = Rocket(prop_mass=111000,mass_empty=5000,height=12.6,payload_mass=payload)
 #prop created
 propellant = Propellant(mass=rocket1.prop_mass,radius=rocket1.radius,height=rocket1.height)
 
+
+propellant1 = Propellant(mass=rocket2.prop_mass,radius=rocket2.radius,height=rocket2.height)
 #engine Created
 engine1 = Engine(mdot=845)
 engine2 = Engine(mdot=845)
+engine3 = Engine(mdot=934)
 #rocket thrust force
 rocket1.thrust = np.array([0,0,7605e3])
+rocket2.thrust = np.array([0.,0.,934000.])
 actual_latitude = 0
 latitude = (actual_latitude-90)*pi/180
 longitude = 0*pi/180
 #exit velocity
-ve_tot = 700
-ve = np.array([0,0,ve_tot])
+
+ve = np.array([0,0,1000.])
 dt = 0.1
 t = 0
 engine1.thrust = ve*engine1.mdot
+engine2.thrust = ve*engine2.mdot
 #atmosphere values
 layers = [0.,11.,20.,32.,47.,51.,71.,86.]
 avals = [-6.5,0,1,2.8,0,-2.8,-2.]
@@ -38,6 +44,7 @@ GM = 3.986004418e14
 earth = Planet(6371e3,g0,layers,avals,base_temp,base_press,r,GM)
 engine1.pos = np.array([0.,0.,0. + earth.radius]) #Changed
 
+engine3.pos = np.array([0.,0.,0. + earth.radius]) #Changed
 
 
 
@@ -60,7 +67,11 @@ presss = []
 vels = []
 cg_vals = []
 moments= []
+prop_mass = []
 vels2 = []
+
+total_force1 = []
+
 rocket_vel = np.array([0.,0.,0.]) #Dont forget to change some stuff about relative velocity and position ya know
 off_pad = False
 #values for circular orbit
@@ -70,31 +81,40 @@ radius = earth.radius
 skin_temp = 0
 angular_vel = np.array([0.,0.,0.])
 total_gimbal = np.array([0.,0.,0.])
+phase1 = False
 while running:
     tot_prop_cg = propellant.prop_cg(rocket1.prop_mass)
     propellant.tot_prop_cg = tot_prop_cg
     rocket1.tot_cgpos = rocket1.tot_cgpos1(tot_prop_cg)
 
 
+    tot_prop_cg1 = propellant.prop_cg(rocket2.prop_mass)
+    propellant1.tot_prop_cg = tot_prop_cg
+    rocket2.tot_cgpos = rocket2.tot_cgpos1(tot_prop_cg1)
 
+    rocket1.payload_mass = rocket2.prop_mass+rocket2.payload_mass
+    rocket1.payload_cg = rocket2.tot_cgpos
+   # rocket1.mass_empty = rocket1.payload_mass+rocket1.mass_empty
 
     #estimate from NASA estimated vals
     radius = sqrt(engine1.pos[0]**2 + engine1.pos[1]**2 + (engine1.pos[2])**2)
 
+    radius1 = sqrt(engine3.pos[0]**2 + engine3.pos[1]**2 + (engine3.pos[2])**2)
+
     #calculates pressure, temperature and density using the atmossolver equation from the atmosphere file
     press,temp,density=atmossolver(earth.g0,earth.layers,earth.avals,radius-earth.radius,earth.r,earth.base_temp,earth.base_press)
 
+    press1, temp1, density1 = atmossolver(earth.g0, earth.layers, earth.avals, radius1 - earth.radius, earth.r,earth.base_temp, earth.base_press)
 
-    engine1.isp = ve/earth.g0
     #engine1 gimballing
     #Relation of gimballed engine to pitch, roll and yaw angle of rocket
     #This is the gimbal of the engine
-    # if rocket1.prop_mass<= 0.25*418700:
-    #
-    #     engine1.gimbal = np.array([pi/2/1800,0,0])
-    #
-    # else:
-    #     engine1.gimbal[0] = 0
+
+    if rocket1.prop_mass<= 0.95*418700:
+        engine1.gimbal = np.array([-pi/2/180,0,0])
+
+    else:
+        engine1.gimbal[0] = 0
     # if engine1.gimbal[2]>= -np.pi/2:
     #     engine1.gimbal-=np.array([0,0,pi/2/1800])
     #
@@ -135,11 +155,16 @@ while running:
     thrust1 = engine1.mdot * ve
     thrust1 = np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,thrust1)))
     thrust2 = engine2.mdot*ve
+
     rocket1.prop_mass=rocket1.prop_mass - dt*engine1.mdot-dt*engine2.mdot*8
     if rocket1.prop_mass <=0:
         engine1.mdot = 0
         engine2.mdot = 0
         rocket1.prop_mass = 0
+        if total_force[2] <= 0.:
+            total_force1.append(total_force[2])
+            initial_force = total_force1[0]
+            accel = initial_force+/(rocket2.mass_empty+rocket2.payload_mass+rocket2.prop_mass)
     #Matrix stuff that was in the classes but now i gotta take it out and into this loop fml
 
 
@@ -185,7 +210,7 @@ while running:
 
 
 
-    rocket_accel = total_force/(rocket1.mass_empty+rocket1.prop_mass)
+    rocket_accel = total_force/(rocket1.mass_empty+rocket1.prop_mass+rocket1.payload_mass)
 
     rocket_vel +=rocket_accel*dt
     engine1.pos +=(np.array([465.1*cos(latitude),465.1*sin(latitude),0.])+rocket_vel)*dt
@@ -220,6 +245,7 @@ while running:
     zpos.append(plotter_pos[2])
     ypos.append(plotter_pos[1])
     xpos.append(plotter_pos[0])
+    prop_mass.append(rocket1.prop_mass)
     ttlforce.append((np.linalg.norm(total_force)))
     skin_temps.append(tot_skin_temp)
     dragforce.append(np.linalg.norm(drag_force))
@@ -231,7 +257,7 @@ while running:
     presss.append(press)
     rads.append(radius-6371e3)
     vels.append(np.linalg.norm(rocket_vel))
-    vels2.append(rocket_vel/np.linalg.norm(rocket_vel))
+   # vels2.append(rocket_vel/np.linalg.norm(rocket_vel))
 
     cg_vals.append(rocket1.tot_cgpos[2])
 mpl.use('Qt5Agg')
