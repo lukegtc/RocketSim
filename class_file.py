@@ -198,3 +198,12 @@ class Matrices:
         return np.array([[cos(alpha),-sin(alpha),0],
                         [sin(alpha),cos(alpha),0],
                         [0,0,1]])
+
+    def moi_matrix(self,prop_mass,mass_empty,payload_mass,radius,height,cgpos):
+        return np.array([[(prop_mass+mass_empty+payload_mass)*(3*(radius)**2 +
+                                height**2)/12 + (mass_empty+payload_mass + prop_mass)*
+                                  (cgpos[1]**2 + cgpos[2]**2),0.,0.],
+                  [0.,(prop_mass+mass_empty+payload_mass)*(3*(radius)**2 + height**2)/12 +
+                   (mass_empty+payload_mass + prop_mass)*(cgpos[0]**2 + cgpos[2]**2),0.],
+                  [0.,0.,0.5*(prop_mass+mass_empty+payload_mass)*(radius)**2 +
+                   (mass_empty+payload_mass + prop_mass)*(cgpos[1]**2 + cgpos[0]**2)]])
