@@ -207,3 +207,11 @@ class Matrices:
                    (mass_empty+payload_mass + prop_mass)*(cgpos[0]**2 + cgpos[2]**2),0.],
                   [0.,0.,0.5*(prop_mass+mass_empty+payload_mass)*(radius)**2 +
                    (mass_empty+payload_mass + prop_mass)*(cgpos[1]**2 + cgpos[0]**2)]])
+
+
+def friction_temp(rocket_vel,air_density,nose_radius,specific_heat, mass,radius,earth_radius,layers,skin_temp):
+    if radius<=earth_radius + layers[-1]*10**3:
+        fric_temp = 1.83*10**(-4)*25*np.linalg.norm(rocket_vel)**3*sqrt(air_density/nose_radius)/specific_heat/(mass)
+        return fric_temp+skin_temp
+    elif skin_temp>=2:
+        return skin_temp-0.1
