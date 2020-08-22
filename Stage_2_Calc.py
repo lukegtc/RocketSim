@@ -3,48 +3,72 @@ import numpy as np
 import matplotlib.pyplot as plt
 from Atmosphere import *
 from math import *
-from rocket_pos_updater import earth,matrices,longitude,latitude,total_accel_final,rocket_vel_end_final,rocket_pos_end_final
+from rocket_pos_updater import earth,longitude,latitude,accel_vel_pos,rocket2,xpos1,ypos1,zpos1
 import matplotlib as mpl
 payload = 22800
-rocket2 = Rocket(prop_mass=111000,mass_empty=5000,height=12.6,payload_mass=payload)
-
+#rocket2 = Rocket(prop_mass=111000,mass_empty=5000,height=12.6,payload_mass=payload)
+matrices1 = Matrices()
 propellant_s2 = Propellant(mass=rocket2.prop_mass,radius=rocket2.radius,height=rocket2.height)
 ve = np.array([0,0,1000.])
 engine3 = Engine(mdot=934)
+engine3.gimbal = np.array([0.,0.,0.])
 engine3.thrust = ve*engine3.mdot
 rocket2.thrust = engine3.thrust
 angular_vel_s2 = np.array([0.,0.,0.])
 total_gimbal_s2 = np.array([0.,0.,0.])
 skin_temp = 0
 #From 1st stage
-initial_accel = total_accel_final
-initial_velocity = rocket_vel_end_final
-initial_pos = rocket_pos_end_final
+#initial_accel = np.array([0.,0.,0.])
+#initial_velocity = np.array([0.,0.,0.])
+#initial_pos = np.array([0.,0.,0. + earth.radius])
+#engine3.pos = initial_pos
+rocket_vel_s2_set = []
+rocket_pos_s2_set = []
+for item in accel_vel_pos:
+   # print(item)
+    if item[-1] == 1:
+
+        s2_initial = item
+        initial_accel = s2_initial[0]
+        initial_velocity =s2_initial[1]
+        initial_pos = s2_initial[2]
+        rocket_vel_s2_set.append(initial_velocity)
+        rocket_pos_s2_set.append(initial_pos)
+        break
+long_yaw_mat1 = matrices1.yaw_matrix(longitude)
+lat_roll_mat1 = matrices1.roll_matrix(latitude)
+lat_pitch_mat1 = matrices1.pitch_matrix(-pi / 2)
+initial_pos_rotated = np.matmul(long_yaw_mat1,np.matmul(lat_pitch_mat1,np.matmul(lat_roll_mat1,initial_pos)))
+xpos_s2 = []
+ypos_s2 = []
+zpos_s2 = []
+xpos_s2.append(initial_pos_rotated[0])
+ypos_s2.append(initial_pos_rotated[1])
+zpos_s2.append(initial_pos_rotated[2])
 engine3.pos = initial_pos
-print(engine3.pos)
 running = True
 points  =[]
 time = []
 dt = 0.1
 t = 0
 while running:
+
     tot_prop_cg_s2 = propellant_s2.prop_cg(rocket2.prop_mass)
     propellant_s2.tot_prop_cg = tot_prop_cg_s2
     rocket2.tot_cgpos = rocket2.tot_cgpos1(tot_prop_cg_s2)
 
-    radius_s2 = sqrt((engine3.pos[0])**2 + (engine3.pos[1])**2 + (engine3.pos[2])**2)
-    print(engine3.pos)
+    radius_s2 = sqrt((rocket_pos_s2_set[-1][0])**2 + (rocket_pos_s2_set[-1][1])**2 + (rocket_pos_s2_set[-1][2])**2)
+    #print(radius_s2)
 
-    press_s2, temp_s2, density_s2 = atmossolver(earth.g0, earth.layers, earth.avals,
-                                          radius_s2 - earth.radius, earth.r,
-                                          earth.base_temp,
-                                          earth.base_press)
+    press_s2, temp_s2, density_s2 = atmossolver(earth.g0, earth.layers, earth.avals,radius_s2 - earth.radius, earth.r,earth.base_temp,earth.base_press)
+
     #Pitch, roll and yaw matrices of the engine due to the gimbal
-    roll_mat1 = matrices.roll_matrix(engine3.gimbal[0]) #around x axis
-    pitch_mat1 = matrices.pitch_matrix(engine3.gimbal[1]) #around the y axis
-    yaw_mat1 = matrices.yaw_matrix(engine3.gimbal[2])
+
+    roll_mat1 = matrices1.roll_matrix(engine3.gimbal[0]) #around x axis
+    pitch_mat1 = matrices1.pitch_matrix(engine3.gimbal[1]) #around the y axis
+    yaw_mat1 = matrices1.yaw_matrix(engine3.gimbal[2])
     #MOI of 2nd Stage
-    moi_mat_s2 = matrices.moi_matrix(rocket2.prop_mass,rocket2.mass_empty,rocket2.payload_mass,rocket2.diameter/2,rocket2.height,rocket2.tot_cgpos)
+    moi_mat_s2 = matrices1.moi_matrix(rocket2.prop_mass,rocket2.mass_empty,rocket2.payload_mass,rocket2.diameter/2,rocket2.height,rocket2.tot_cgpos)
 
     moment_from_gimbal_engine_s2 = engine3.engine2bodygimbal(rocket2.tot_cgpos, pitch_mat1, roll_mat1, yaw_mat1)
 
@@ -53,9 +77,9 @@ while running:
     angular_vel_s2 += angular_accel1*dt
     total_gimbal_s2 +=angular_vel_s2*dt
 
-    tot_roll_mat1 = matrices.roll_matrix(total_gimbal_s2[0])
-    tot_pitch_mat1 = matrices.pitch_matrix(total_gimbal_s2[1])
-    tot_yaw_mat1 = matrices.yaw_matrix(total_gimbal_s2[2])
+    tot_roll_mat1 = matrices1.roll_matrix(total_gimbal_s2[0])
+    tot_pitch_mat1 = matrices1.pitch_matrix(total_gimbal_s2[1])
+    tot_yaw_mat1 = matrices1.yaw_matrix(total_gimbal_s2[2])
 
 
     #2nd Stage Thrust
@@ -63,41 +87,54 @@ while running:
     thrust3 = engine3.mdot*ve
 
     thrust3 = np.matmul(yaw_mat1,np.matmul(pitch_mat1,np.matmul(roll_mat1,thrust3)))
-    rotated_thrust_s2 = np.matmul(tot_yaw_mat1, np.matmul(tot_pitch_mat1, np.matmul(tot_roll_mat1, thrust3)))
 
-    long_yaw_mat1 = matrices.yaw_matrix(longitude)
-    lat_roll_mat1 = matrices.roll_matrix(latitude)
-    lat_pitch_mat1 = matrices.pitch_matrix(-pi/2)
+
+
+    rocket2.prop_mass = rocket2.prop_mass - dt * engine3.mdot
+    if rocket2.prop_mass <=0.:
+        engine3.mdot = 0.
+        rocket2.prop_mass = 0.
+
 
     #Drag force change
     if radius_s2<earth.radius:
         drag_force_s2 = np.array([0.,0.,0.])
-        rocket_vel_s2 = np.array([0.,0.,0.])
+        rocket_vel_s2_set.append(np.array([0.,0.,0.]))
+        break
     else:
-        if np.linalg.norm(rocket_vel_s2) != 0.:
-            drag_force_s2 = -0.5*density_s2*(np.linalg.norm(rocket_vel_s2)**2)*rocket2.area*rocket2.cD*rocket_vel_s2/(np.linalg.norm(rocket_vel_s2))
+
+        if np.linalg.norm(rocket_vel_s2_set[-1]) != 0.:
+            drag_force_s2 = -0.5*density_s2*(np.linalg.norm(rocket_vel_s2_set[-1])**2)*rocket2.area*rocket2.cD*rocket_vel_s2_set[-1]/(np.linalg.norm(rocket_vel_s2_set[-1]))
 
         else:
             drag_force_s2 = np.array([0,0,0])
 
-    total_force_s2 = (rocket2.mass_empty+rocket2.prop_mass+rocket2.payload_mass)*(engine3.pos/radius_s2)*-9.80665+rotated_thrust_s2+drag_force_s2
+    rotated_thrust_s2 = np.matmul(tot_yaw_mat1, np.matmul(tot_pitch_mat1, np.matmul(tot_roll_mat1, thrust3)))
 
-    rock_accel_s2 = total_force_s2/(rocket2.mass_empty+rocket2.prop_mass+rocket2.payload_mass) + initial_accel
+    total_force_s2 = (rocket2.mass_empty+rocket2.prop_mass+rocket2.payload_mass)*(rocket_pos_s2_set[-1]/radius_s2)*-9.80665+rotated_thrust_s2+drag_force_s2
 
-    rocket_vel_s2+=rock_accel_s2*dt
+    rock_accel_s2 = total_force_s2/(rocket2.mass_empty+rocket2.prop_mass+rocket2.payload_mass)
+   # print(rock_accel_s2)
+    rocket_vel_s2_set.append(rock_accel_s2*dt+rocket_vel_s2_set[-1])
 
-    engine3.pos +=(np.array([465.1*cos(latitude),465.1*sin(latitude),0.])+rocket_vel_s2+initial_velocity)*dt
-
+    rocket_pos_s2_set.append((np.array([465.1*cos(latitude),465.1*sin(latitude),0.])+rocket_vel_s2_set[-1])*dt + rocket_pos_s2_set[-1])
+    engine3.pos = rocket_pos_s2_set[-1]
+   # print(rocket_pos_s2_set[-1])
     t+=dt
 
     nose_radius_s2 = 0.7 #don't know if this is true but eh close enough for F9
-    skin_temp = friction_temp(rocket_vel_s2,density_s2,nose_radius_s2,rocket2.specific_heat,rocket2.payload_mass+rocket2.mass_empty+rocket2.prop_mass,radius_s2,earth.radius,earth.layers,skin_temp)
+  #  skin_temp = friction_temp(rocket_vel_s2,density_s2,nose_radius_s2,rocket2.specific_heat,rocket2.payload_mass+rocket2.mass_empty+rocket2.prop_mass,radius_s2,earth.radius,earth.layers,skin_temp) +
+  #  print(skin_temp)
 
-    plotter_pos_s2 = np.matmul(long_yaw_mat1,np.matmul(lat_pitch_mat1,np.matmul(lat_roll_mat1, (engine3.pos))))
+    plotter_pos_s2 = np.matmul(long_yaw_mat1,np.matmul(lat_pitch_mat1,np.matmul(lat_roll_mat1, rocket_pos_s2_set[-1])))
     tot_skin_temp = temp_s2 + skin_temp
-    print(plotter_pos_s2)
+
     points.append(plotter_pos_s2)
     time.append(t)
+    xpos_s2.append(plotter_pos_s2[0])
+    ypos_s2.append(plotter_pos_s2[1])
+    zpos_s2.append(plotter_pos_s2[2])
+  #  print(rocket_pos_s2_set[-1])
     if skin_temp >= 1923.15:  #This reentry temp is totally made up based on space shuttle values
         running = False
         print('Burnt up on reentry or ascent')
@@ -107,5 +144,14 @@ while running:
         break
     t += dt
 
-plt.plot(points[:][0],points[:][1])
+
+fig_s2, ax_s2 = plt.subplots()
+plt.title('X-Y Plot')
+circle1 = plt.Circle((0,0),6371e3,color='b')
+ax_s2.add_artist(circle1)
+#plt.plot(xpos1,ypos1,color  = 'g')
+plt.plot(xpos_s2,ypos_s2,color = 'r')
+#plt.plot(ypos1,zpos1,color = 'g')
+plt.xlabel('X')
+plt.ylabel('Y')
 plt.show()
