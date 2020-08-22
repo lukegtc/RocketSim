@@ -24,17 +24,28 @@ skin_temp = 0
 #engine3.pos = initial_pos
 rocket_vel_s2_set = []
 rocket_pos_s2_set = []
+angular_vel_s2 = []
+total_gimbal_s2  =[]
 for item in accel_vel_pos:
-   # print(item)
+
     if item[-1] == 1:
 
+        check = 1
         s2_initial = item
         initial_accel = s2_initial[0]
         initial_velocity =s2_initial[1]
         initial_pos = s2_initial[2]
         rocket_vel_s2_set.append(initial_velocity)
         rocket_pos_s2_set.append(initial_pos)
+        initial_angular_accel = s2_initial[5]
+        initial_angular_vel = s2_initial[3]
+        angular_vel_s2.append(initial_angular_vel)
+        #initial_gimbal= s2_initial[4]
         break
+    else:
+        check = 0
+        initial_pos = np.array([0.,0.,0.])
+
 long_yaw_mat1 = matrices1.yaw_matrix(longitude)
 lat_roll_mat1 = matrices1.roll_matrix(latitude)
 lat_pitch_mat1 = matrices1.pitch_matrix(-pi / 2)
@@ -52,13 +63,20 @@ time = []
 dt = 0.1
 t = 0
 while running:
-
+    if check == 0:
+        break
     tot_prop_cg_s2 = propellant_s2.prop_cg(rocket2.prop_mass)
     propellant_s2.tot_prop_cg = tot_prop_cg_s2
     rocket2.tot_cgpos = rocket2.tot_cgpos1(tot_prop_cg_s2)
 
     radius_s2 = sqrt((rocket_pos_s2_set[-1][0])**2 + (rocket_pos_s2_set[-1][1])**2 + (rocket_pos_s2_set[-1][2])**2)
     #print(radius_s2)
+
+    if rocket2.prop_mass<= 0.99*111000:
+        engine3.gimbal = np.array([-1*pi/2/180,0.,0.])
+    else:
+       engine3.gimbal = np.array([0.,0.,0.])
+
 
     press_s2, temp_s2, density_s2 = atmossolver(earth.g0, earth.layers, earth.avals,radius_s2 - earth.radius, earth.r,earth.base_temp,earth.base_press)
 
@@ -74,12 +92,12 @@ while running:
 
     angular_accel1 = rocket2.angular_accel_mat(moi_mat_s2,moment_from_gimbal_engine_s2) #CHECK THIS
 
-    angular_vel_s2 += angular_accel1*dt
-    total_gimbal_s2 +=angular_vel_s2*dt
-
-    tot_roll_mat1 = matrices1.roll_matrix(total_gimbal_s2[0])
-    tot_pitch_mat1 = matrices1.pitch_matrix(total_gimbal_s2[1])
-    tot_yaw_mat1 = matrices1.yaw_matrix(total_gimbal_s2[2])
+    angular_vel_s2.append(angular_accel1*dt+angular_vel_s2[-1])
+    total_gimbal_s2.append(angular_vel_s2[-1]*dt)
+  # print(angular_vel_s2)
+    tot_roll_mat1 = matrices1.roll_matrix(total_gimbal_s2[-1][0])
+    tot_pitch_mat1 = matrices1.pitch_matrix(total_gimbal_s2[-1][1])
+    tot_yaw_mat1 = matrices1.yaw_matrix(total_gimbal_s2[-1][2])
 
 
     #2nd Stage Thrust

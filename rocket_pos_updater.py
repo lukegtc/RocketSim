@@ -86,6 +86,9 @@ rocket_vel_end = []
 s2drag = []
 accel_vel_pos = []
 poss = []
+angular_vel_mat = []
+total_gimbal_mat = []
+
 rocket_vel = np.array([0.,0.,0.]) #Dont forget to change some stuff about relative velocity and position ya know
 rocket_vel1 = np.array([0.,0.,0.])
 rocket_accel = np.array([0.,0.,0.])
@@ -100,8 +103,8 @@ orbital_alt = 500e3
 orbit_vel = sqrt(earth.GM/(earth.r+orbital_alt))
 radius = earth.radius
 skin_temp = 0
-angular_vel = np.array([0.,0.,0.])
-total_gimbal = np.array([0.,0.,0.])
+angular_vel_mat.append(np.array([0.,0.,0.]))
+total_gimbal_mat.append(np.array([0.,0.,0.]))
 #rocket_pos_end_final  = np.array([0.,0.,0.])
 angular_vel1 = np.array([0.,0.,0.])
 total_gimbal1 = np.array([0.,0.,0.])
@@ -130,20 +133,13 @@ while running:
 
 
 
-    # if rocket1.prop_mass<= 0.95*418700:
-    #     engine1.gimbal = np.array([-pi/2/180,0,0])
-    #
-    # else:
-    #     engine1.gimbal[0] = 0
-#    if rocket2.prop_mass<= 0.75*111000:
-#        engine3.gimbal = np.array([-5*pi/2/180,0.,0.])
-#    else:
-#       engine3.gimbal = np.array([0.,0.,0.])
-    # if engine1.gimbal[2]>= -np.pi/2:
-    #     engine1.gimbal-=np.array([0,0,pi/2/1800])
-    #
-    # else:
-    #     engine1.gimbal[2] = -pi/2
+    if rocket1.prop_mass<= 0.95*418700:
+        engine1.gimbal = np.array([-0*pi/2/180,0,0])
+
+    else:
+        engine1.gimbal[0] = 0
+
+
 
     #Stage 1 engine pitch roll yaw matrices
 
@@ -161,12 +157,12 @@ while running:
 
     angular_accel = rocket1.angular_accel_mat(moi_mat,moment_from_gimbal_engine) #CHECK THIS
 
-    angular_vel += angular_accel*dt
-    total_gimbal +=angular_vel*dt
+    angular_vel_mat.append( angular_accel*dt+angular_vel_mat[-1])
+    total_gimbal_mat.append(angular_vel_mat[-1]*dt + total_gimbal_mat[-1])
 
-    tot_roll_mat = matrices.roll_matrix(total_gimbal[0])
-    tot_pitch_mat = matrices.pitch_matrix(total_gimbal[1])
-    tot_yaw_mat = matrices.yaw_matrix(total_gimbal[2])
+    tot_roll_mat = matrices.roll_matrix(total_gimbal_mat[-1][0])
+    tot_pitch_mat = matrices.pitch_matrix(total_gimbal_mat[-1][1])
+    tot_yaw_mat = matrices.yaw_matrix(total_gimbal_mat[-1][2])
 
 
     #1st Stage Thrust w gimbal in engine1------------------------
@@ -181,16 +177,7 @@ while running:
 
     if rocket1.prop_mass <=0.:
 
-        # total_force1.append(rocket_accel)
-        # rocket_vel_end.append(rocket_vel)
-        # rocket_pos_end.append(engine1.pos)
-        # if len(total_force1) == 1:
-        #     total_accel_final = total_force1[0]
-        # if len(rocket_vel_end) == 1:
-        #     rocket_vel_end_final = rocket_vel_end[0]
-        # if len(rocket_pos_end) == 1:
-        #     rocket_pos_end_final = rocket_pos_end[0]
-        #     print(rocket_pos_end_final)
+
         check = 1
         engine1.mdot = 0
         engine2.mdot = 0
@@ -229,7 +216,7 @@ while running:
     engine1.pos = rocket_poss[-1]
     temps.append(temp)
 
-    accel_vel_pos.append([rocket_accel,rocket_vels[-1],rocket_poss[-1],check])
+    accel_vel_pos.append([rocket_accel,rocket_vels[-1],rocket_poss[-1],angular_vel_mat[-1],total_gimbal_mat[-1],angular_accel,check])
 
     #print(accel_vel_pos)
 

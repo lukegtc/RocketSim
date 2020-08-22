@@ -1,6 +1,6 @@
 import vpython
 from rocket_pos_updater import *
-from Stage_2_Calc import xpos_s2,ypos_s2,zpos_s2
+from Stage_2_Calc import xpos_s2,ypos_s2,zpos_s2,check
 earth_location = vpython.vector(0,0,0)
 rocket_location = vpython.vector(xpos[0],ypos[0],zpos[0])
 vpython.sphere(pos = earth_location, radius= earth.radius, color = vpython.color.blue)
@@ -33,5 +33,7 @@ while running1:
         vpython.sphere(pos=vpython.vector(xpos1[i], ypos1[i], zpos1[i]), radius=rocket1.radius * 100,color=vpython.color.orange)
     #print(vpython.scene.camera.pos)
     i+=1
-    if i == len(xpos1):
+    if i == len(xpos) and check == 0:
+        running1 = False
+    if i == len(xpos1) and check ==1:
         running1 = False
