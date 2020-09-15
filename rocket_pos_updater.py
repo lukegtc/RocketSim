@@ -348,9 +348,9 @@ plt.plot(time,dragforce,color = 'r')
 plt.show()
 
 
-plt.title('Skin Temp')
-plt.plot(time,skin_temps)
-plt.show()
+# plt.title('Skin Temp')
+# plt.plot(time,skin_temps)
+# plt.show()
 
 
 fig3,ax3 = plt.subplots()
