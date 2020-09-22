@@ -173,6 +173,7 @@ class Engine:
         self.gimbal = gimbal
 
     def engine2bodygimbal(self,cgpos,pitch_mat,roll_mat,yaw_mat):
+
         new_thrust = np.matmul(yaw_mat,np.matmul(pitch_mat,np.matmul(roll_mat,self.thrust)))
 
         moments = np.matmul(np.array([[0,new_thrust[2],new_thrust[1]],
