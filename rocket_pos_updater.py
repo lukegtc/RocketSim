@@ -206,6 +206,8 @@ def rocket_func(stage1,stage2,gimbal_engine1,engine1,latitude,longitude,total_gi
         t += dt
     return xpos,ypos,zpos,xpos1,ypos1,zpos1,dragforce,dynamic_press,time,moments,rads,rads,tot_mass,accel_vel_pos,stage1,stage2,earth,latitude,longitude
 
+
+
 def staging_wo_1st_stage(stage,exit_vel,initial_vals,latitude,longitude,planet):
 
     matrices1 = Matrices()
