@@ -40,7 +40,7 @@ def atmossolver(g0,layers,avals,alt_given,r,base_temp,base_press):
             break
         elif alt_given/1000>layers[-1]:
             temp2 = 2
-            press2 = 0
+            press2 = 2
             return press2,temp2,press2/r/temp2
         else:
             new_alt = AtmosLayer(layers[i+1],avals[i],layers[i],base_temp1[-1],base_press1[-1],g0,r)
