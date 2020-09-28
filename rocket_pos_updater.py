@@ -3,8 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from Atmosphere import *
 from math import *
+from tqdm import tqdm
 import matplotlib as mpl
-def rocket_func(stage1,stage2,gimbal_engine1,engine1,throttle_pcts,gimbal_throttle_pcts,latitude,longitude,gimbals,exit_vel,layers,avals,base_temp,base_press,r,g0,timeset):
+def rocket_func(stage1,stage2,gimbal_engine1,engine1,latitude,longitude,exit_vel,layers,avals,base_temp,base_press,r,g0,gimbal_throttle_pcts,throttle_pcts,timeset,gimbals):
     GM = 3.986004418e14
     earth = Planet(6371e3,g0,layers,avals,base_temp,base_press,r,GM)
     gimbal_engine1.pos = np.array([0.,0.,0. + earth.radius])
@@ -33,7 +34,7 @@ def rocket_func(stage1,stage2,gimbal_engine1,engine1,throttle_pcts,gimbal_thrott
 
     #2nd stage values-------
 
-
+    tang_vel = []
     checks = []
     s2drag = []
     accel_vel_pos = []
@@ -47,7 +48,7 @@ def rocket_func(stage1,stage2,gimbal_engine1,engine1,throttle_pcts,gimbal_thrott
     rocket_poss = []
     dynamic_press = []
     rocket_poss.append(gimbal_engine1.pos)
-
+    prop_masses =[]
     rocket_calc_pos=[]
     rocket_calc_pos.append(gimbal_engine1.pos)
     angular_vel_mat.append(np.array([0.,0.,0.]))
@@ -74,6 +75,9 @@ def rocket_func(stage1,stage2,gimbal_engine1,engine1,throttle_pcts,gimbal_thrott
         #Distance to the center of the planet--------------
         #estimate from NASA estimated vals
         radius = sqrt(rocket_poss[-1][0]**2 + rocket_poss[-1][1]**2 + (rocket_poss[-1][2])**2)
+        tangential_vel = rocket_vels[-1] - np.dot(rocket_vels[-1],rocket_poss[-1])/np.sqrt(sum(rocket_poss[-1]**2)) * rocket_poss[-1]
+
+
 
         press,temp,density=atmossolver(earth.g0,earth.layers,earth.avals,radius-earth.radius,earth.r,earth.base_temp,earth.base_press)
 
@@ -175,7 +179,7 @@ def rocket_func(stage1,stage2,gimbal_engine1,engine1,throttle_pcts,gimbal_thrott
         temps.append(temp)
 
         accel_vel_pos.append([rocket_accel,rocket_vels[-1],rocket_poss[-1],angular_vel_mat[-1],total_gimbal_mat[-1],angular_accel,check])
-
+        tang_vel.append(rocket_vels[-1]-(np.dot(rocket_vels[-1],rocket_poss[-1])/np.sqrt(rocket_poss[-1]**2))*rocket_poss[-1])
         long_yaw_mat = matrices.yaw_matrix(longitude)
         lat_roll_mat = matrices.roll_matrix(latitude)
         lat_pitch_mat = matrices.pitch_matrix(-pi/2)
@@ -199,6 +203,7 @@ def rocket_func(stage1,stage2,gimbal_engine1,engine1,throttle_pcts,gimbal_thrott
         moments.append(total_moment[0])
         densitys.append(density)
         tot_mass.append(stage1.mass_empty+stage1.payload_mass+stage1.prop_mass)
+        prop_masses.append(stage1.prop_mass)
         temps.append(temp)
         presss.append(press)
         rads.append(radius-6371e3)
@@ -210,7 +215,7 @@ def rocket_func(stage1,stage2,gimbal_engine1,engine1,throttle_pcts,gimbal_thrott
             break
         i+=1
         t+=dt
-    return np.array(points),np.array(s2_points_on_s1),dragforce,dynamic_press,time,moments,rads,tot_mass,accel_vel_pos,stage1,stage2,earth,latitude,longitude
+    return np.array(points),np.array(s2_points_on_s1),dragforce,dynamic_press,time,moments,rads,tot_mass,accel_vel_pos,stage1,stage2,earth,latitude,longitude,np.array(tang_vel),np.array(prop_masses)
 
 def staging_wo_1st_stage(stage,exit_vel,initial_vals,latitude,longitude,planet,engine_s2,tot_gimbal):
 

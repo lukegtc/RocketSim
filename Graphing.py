@@ -2,15 +2,16 @@ import matplotlib.pyplot as plt
 from class_file import *
 from rocket_pos_updater import *
 from thrust_gimbal_combo import timeset,random_val_test
-mdot_vals,mdot_gimbal_vals,gimbal_vals = random_val_test(timeset)
-points_s1,no_fuel_points_s1,dragforce,dynamic_press,time,moments,rads,tot_mass,accel_vel_pos,stage1,stage2,earth,latitude,longitude= rocket_func(
+
+throttle_pcts,gimbal_throttle_pcts,gimbals = random_val_test(timeset)
+points_s1,no_fuel_points_s1,dragforce,dynamic_press,time,moments,rads,tot_mass,accel_vel_pos,stage1,stage2,earth,latitude,longitude,tang_vel,prop_masses= rocket_func(
     Rocket(prop_mass=418700.,mass_empty=27200.,thrust=np.array([0,0,7605e3])),
     Rocket(prop_mass=111000,mass_empty=5000,height=12.6,payload_mass=22800,thrust=np.array([0.,0.,934000.])),
-    Engine(mdot=845),Engine(mdot=845),mdot_vals,mdot_gimbal_vals,(-90)*pi/180,0*pi/180,gimbal_vals,
-    np.array([0,0,1000.]),[0.,11.,20.,32.,47.,51.,71.,86.],[-6.5,0,1,2.8,0,-2.8,-2.],288.15,101325,287,9.80665,timeset)
+    Engine(mdot=266),Engine(mdot=266),(-90)*pi/180,0*pi/180,
+    np.array([0,0,2550]),[0.,11.,20.,32.,47.,51.,71.,86.],[-6.5,0,1,2.8,0,-2.8,-2.],288.15,101325,287,9.80665,gimbal_throttle_pcts,throttle_pcts,timeset,gimbals)
 
 #Stage 2 Motion after disconnection from Stage 1
-points_s2,time_s2,rocket_vel_s2_set,eot,eot_t= staging_wo_1st_stage(stage2,np.array([0.,0.,1000.]),accel_vel_pos,latitude,longitude,earth,Engine(mdot=934),-30)
+points_s2,time_s2,rocket_vel_s2_set,eot,eot_t= staging_wo_1st_stage(stage2,np.array([0.,0.,3400]),accel_vel_pos,latitude,longitude,earth,Engine(mdot=266),0)
 
 
 #This is the motion of the initial point where the craft launched from
@@ -28,6 +29,7 @@ plt.show()
 
 plt.title('Total Height')
 plt.plot(time,rads)
+#plt.plot(time_s2,rads1)
 #plt.plot(time,rads1)
 plt.show()
 
@@ -84,6 +86,7 @@ ax_s2.add_artist(circle1)
 plt.plot(points_s2[:,0],points_s2[:,1],color = 'r')
 plt.plot(points_s1[:,0],points_s1[:,1],color = 'g')
 plt.plot(eot[:,0],eot[:,1],color = 'b')
+plt.plot(no_fuel_points_s1[:,0],no_fuel_points_s1[:,1],color = 'y')
 #plt.plot(ypos1,zpos1,color = 'g')
 plt.xlabel('X')
 plt.ylabel('Y')
