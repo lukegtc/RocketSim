@@ -179,7 +179,7 @@ def rocket_func(stage1,stage2,gimbal_engine1,engine1,latitude,longitude,exit_vel
         temps.append(temp)
 
         accel_vel_pos.append([rocket_accel,rocket_vels[-1],rocket_poss[-1],angular_vel_mat[-1],total_gimbal_mat[-1],angular_accel,check])
-        tang_vel.append(rocket_vels[-1]-(np.dot(rocket_vels[-1],rocket_poss[-1])/np.sqrt(rocket_poss[-1]**2))*rocket_poss[-1])
+        tang_vel.append(np.linalg.norm(rocket_vels[-1]-(np.dot(rocket_vels[-1],rocket_poss[-1])/np.sqrt(rocket_poss[-1]**2))*rocket_poss[-1]))
         long_yaw_mat = matrices.yaw_matrix(longitude)
         lat_roll_mat = matrices.roll_matrix(latitude)
         lat_pitch_mat = matrices.pitch_matrix(-pi/2)
